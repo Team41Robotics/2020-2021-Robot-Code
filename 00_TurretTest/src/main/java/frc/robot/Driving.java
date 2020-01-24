@@ -16,8 +16,8 @@ class Driving {
     }
 
     public void controllerMove(Joystick controller) {
-        double leftJoy = controller.getRawAxis(1); // Left joystick y-axis
-        double rightJoy = controller.getRawAxis(5); // Right joystick y-axis
+        double leftJoy = controller.getRawAxis(BUTTONS.LEFT_JOY_Y_AXIS);
+        double rightJoy = controller.getRawAxis(BUTTONS.RIGHT_JOY_Y_AXIS);
         
         double speedMultiplier = 0.4;
         sparkLB.set(leftJoy*speedMultiplier);

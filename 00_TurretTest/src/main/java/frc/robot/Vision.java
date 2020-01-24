@@ -15,17 +15,24 @@ class Vision {
     private NetworkTableEntry ledMode;
     private boolean isTracking;
 
+    private boolean firstRun;
+
     public Vision() {
         table = NetworkTableInstance.getDefault().getTable("limelight");
         tx = table.getEntry("tx");
         ty = table.getEntry("ty");
         ta = table.getEntry("ta");
         ledMode = table.getEntry("ledMode");
-        ledMode.setNumber(1); // Set it to off
-        isTracking = false; // Since LED is off, we are not tracking
+        firstRun = true;
     }
 
     public void runVision(Joystick controller) {
+        if(firstRun) {
+            ledMode.setNumber(1); // Set it to off
+            isTracking = false; // Since LED is off, we are not tracking
+            firstRun = false;
+        }
+
         //read values periodically
         double x = tx.getDouble(0.0);
         double y = ty.getDouble(0.0);
@@ -36,7 +43,7 @@ class Vision {
         SmartDashboard.putNumber("LimelightY", y);
         SmartDashboard.putNumber("LimelightArea", area);
 
-        if(controller.getRawButtonPressed(BUTTONS.TRACKING_SWITCH)) {
+        if(controller.getRawButtonPressed(BUTTONS.B_BUTTON)) {
             ledMode.setNumber(isTracking ? 1 : 3);
             isTracking = !isTracking;
         }
