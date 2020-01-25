@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
  */
 public class Robot extends TimedRobot {
 	private Joystick controller = new Joystick(1);
-
+	
 	private Turret turret;
 
 	/* private double speed = 0;

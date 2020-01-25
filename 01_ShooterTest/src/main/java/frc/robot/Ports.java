@@ -1,12 +1,16 @@
 package frc.robot;
 
 class PORTS {
-    public final static int SHOOTER_TALON_1 = 4,
-    SHOOTER_TALON_2 = 3,
+    public final static int SHOOTER_TALON_1 = 3,
+    SHOOTER_TALON_2 = 4,
     INTAKE_TALON = 2,
     ROTATE_SPARK = 4,
-    SHOOTER_ENCODER_A = 0,
-	SHOOTER_ENCODER_B = 1;
+    AXLE_ENCODER_A = 0,
+	AXLE_ENCODER_B = 1,
+    SHOOTER_ENCODER_1_A = 3,
+	SHOOTER_ENCODER_1_B = 2,
+    SHOOTER_ENCODER_2_A = 5,
+	SHOOTER_ENCODER_2_B = 4;
 }
 
 class BUTTONS {
