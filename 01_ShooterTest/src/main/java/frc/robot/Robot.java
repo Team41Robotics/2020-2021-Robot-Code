@@ -26,6 +26,8 @@ public class Robot extends TimedRobot {
 	private Joystick controller = new Joystick(1);
 	
 	private Turret turret;
+	private Vision vis;
+	private Driving drive;
 
 	/* private double speed = 0;
 	private TalonSRX talonTest = new TalonSRX(5);
@@ -37,7 +39,9 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void robotInit() {
-		turret = new Turret();
+		vis = new Vision();
+		turret = new Turret(vis);
+		drive = new Driving();
 	}
 
 	/**
@@ -71,19 +75,8 @@ public class Robot extends TimedRobot {
 	@Override
 	public void teleopPeriodic() {
 		turret.controllerMove(controller);
-		
-		/* //start talon A button
-		if(controller.getRawButtonPressed(1))
-			speed = 0.1;
-		//change directions X button
-		if(controller.getRawButtonPressed(3))
-			speed *= -1;
-		//stop talons B button
-		if(controller.getRawButtonPressed(2))
-			speed = 0;
-		
-		talonTest.set(ControlMode.PercentOutput, speed);
-		System.out.println(encTest.getRaw()); */
+		vis.runVision(controller);
+		drive.controllerMove(controller);
 	}
 
 	/**

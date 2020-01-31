@@ -1,32 +1,32 @@
 package frc.robot;
 
 class PORTS {
-    public final static int SHOOTER_TALON_1 = 3,
-    SHOOTER_TALON_2 = 4,
-    INTAKE_TALON = 2,
-    ROTATE_SPARK = 4,
-    AXLE_ENCODER_A = 0,
+	public final static int FALCON_TALON = 1,
+	INTAKE_TALON = 2,
+	TALON_RF = 5,
+	TALON_RB = 11,
+	TALON_LF = 4,
+	TALON_LB = 3,
+	ROTATE_SPARK = 4,
+	AXLE_ENCODER_A = 0,
 	AXLE_ENCODER_B = 1,
-    SHOOTER_ENCODER_1_A = 3,
-	SHOOTER_ENCODER_1_B = 2,
-    SHOOTER_ENCODER_2_A = 5,
-	SHOOTER_ENCODER_2_B = 4;
+	ROTATE_LIMIT = 7;
 }
 
 class BUTTONS {
-    // Logitech Game Controller
-    // Buttons
-    public final static int A_BUTTON = 1,
-    B_BUTTON = 2,
-    X_BUTTON = 3,
-    Y_BUTTON = 4,
-    L_BUMPER = 5,
-    R_BUMPER = 6,
-    BACK_BUTTON = 7,
-    START_BUTTON = 8,
-    L_JOY_CLICK = 9,
-    R_JOY_CLICK = 10,
-    // Axes
+	// Logitech Game Controller
+	// Buttons
+	public final static int A_BUTTON = 1,
+	B_BUTTON = 2,
+	X_BUTTON = 3,
+	Y_BUTTON = 4,
+	L_BUMPER = 5,
+	R_BUMPER = 6,
+	BACK_BUTTON = 7,
+	START_BUTTON = 8,
+	L_JOY_CLICK = 9,
+	R_JOY_CLICK = 10,
+	// Axes
 	LEFT_JOY_X_AXIS = 0,
 	LEFT_JOY_Y_AXIS = 1,
 	LEFT_TRIGGER_AXIS = 2,
