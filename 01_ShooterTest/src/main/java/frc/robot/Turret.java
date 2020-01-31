@@ -28,18 +28,20 @@ public class Turret {
 	private Vision vis;
 
 	private boolean rampUp = false;
+	private boolean rampDown = false;
 	private boolean turretZeroed = false;
 	
-	private final double maxSpeed = 1.0; // From 0 to 1
-	private final double rampUpPeriod = 2.0; // In seconds. If this is 0, it will immediately go to maxSpeed
+	private final double maxSpeed = 0.7; // From 0 to 1
+	private final double rampUpPeriod = 3.0; // In seconds. If this is 0, it will immediately go to maxSpeed
+	private final double rampDownPeriod = 7.0; // In seconds. If this is 0, it will immediately go to maxSpeed
 	private final boolean feedForward = true;
-	private final boolean usePID = false;
+	private final boolean usePID = true;
 	private final boolean useVision = true;
 	
 	// Constants
 	private final double MAX_FALCON_ENCODER_RATE = 6_500; // Found experimentally
 	private final double TURRET_ENC_MAX = 140; // Found experimentally
-	private final double FALCON_Kp = 0.5, FALCON_Ki = 0, FALCON_Kd = 0.0;
+	private final double FALCON_Kp = 1.2, FALCON_Ki = 0.2, FALCON_Kd = 0.0;
 	private final double ROTATE_Kp = 0.012, ROTATE_Ki = 0.004, ROTATE_Kd = 0.0; //.012, .004, 0
 
 	public Turret(Vision vis) {
@@ -92,24 +94,27 @@ public class Turret {
 
 		//Stop the motors in the shooter using the left bumper
 		if(controller.getRawButtonPressed(BUTTONS.L_BUMPER)) {
-			shooterSpeed = 0;
 			intakeSpeed = 0;
 			rampUp = false;
+			if(rampDownPeriod == 0)
+				shooterSpeed = 0;
+			else
+				rampDown = true;
 		}
 
 		if(usePID) {
-			// double falconOutputSpeed = falconPID.calculate(
-			// 	falconEncoder.getRate()/MAX_FALCON_ENCODER_RATE,
-			// 	shooterSpeed
-			// );
-			// if(shooterSpeed == 0) {
-			// 	falconOutputSpeed = 0;
-			// }
-			// else if(feedForward) {
-			// 	falconOutputSpeed += shooterSpeed;
-			// }
+			double falconOutputSpeed = falconPID.calculate(
+				axleEncoder.getRate()/MAX_FALCON_ENCODER_RATE,
+				shooterSpeed
+			);
+			if(shooterSpeed == 0) {
+				falconOutputSpeed = 0;
+			}
+			else if(feedForward) {
+				falconOutputSpeed += shooterSpeed;
+			}
 
-			// falconTalon.set(ControlMode.PercentOutput, falconOutputSpeed);
+			falconTalon.set(ControlMode.PercentOutput, falconOutputSpeed);
 		}
 		else {
 			falconTalon.set(ControlMode.PercentOutput, shooterSpeed);
@@ -117,6 +122,7 @@ public class Turret {
 		intakeTalon.set(ControlMode.PercentOutput, -intakeSpeed);
 
 		SmartDashboard.putNumber("shooter encoder rate", axleEncoder.getRate());
+		SmartDashboard.putNumber("falcon current", falconTalon.getSupplyCurrent());
 		// SmartDashboard.putNumber("falcon encoder rate", falconEncoder.getVelocity());
 	}
 
@@ -142,6 +148,12 @@ public class Turret {
 				rampUp = true;
 				System.out.println("Starting ramp up to " + Math.round(maxSpeed*100) + "% speed over " + rampUpPeriod + " seconds");
 			}
+		}
+		if(rampDown) {
+			if(shooterSpeed > 0) // If we have started the ramp down
+				shooterSpeed -= 20/(rampDownPeriod*1000) * maxSpeed; // 20 is because this iterates every 20 ms
+			else
+				rampDown = false;
 		}
 		if(rampUp) {
 			if(shooterSpeed < maxSpeed) // If we have started the ramp up
@@ -228,7 +240,7 @@ public class Turret {
 			System.out.println("Turret zeroed");
         }
         else{
-			rotateSpark.set(-0.175); // Slowly rotate clockwise ... until limit is hit
+			rotateSpark.set(-0.2); // Slowly rotate clockwise ... until limit is hit
 		}
     }
 }
