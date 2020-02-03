@@ -25,13 +25,11 @@ public class Driving {
 
 	
 	public void controllerMove(Joystick controller) {
-		double leftAxis = controller.getRawAxis(BUTTONS.LEFT_JOY_Y_AXIS);
-		double rightAxis = controller.getRawAxis(BUTTONS.RIGHT_JOY_Y_AXIS);
+		double leftAxis = controller.getRawAxis(BUTTONS.GAMEPAD.LEFT_JOY_Y_AXIS);
+		double rightAxis = controller.getRawAxis(BUTTONS.GAMEPAD.RIGHT_JOY_Y_AXIS);
 
-		double speedMultiplier = 0.69;
+		double speedMultiplier = 0.55;
 
-		//System.out.println("Left: " + leftAxis + " | Right: " + rightAxis);
-		
-		difDrive.tankDrive(leftAxis*speedMultiplier, rightAxis*speedMultiplier);
+		difDrive.tankDrive(-leftAxis*speedMultiplier, -rightAxis*speedMultiplier);
 	}
 }

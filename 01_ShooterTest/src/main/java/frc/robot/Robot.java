@@ -41,7 +41,7 @@ public class Robot extends TimedRobot {
 	public void robotInit() {
 		vis = new Vision();
 		turret = new Turret(vis);
-		// drive = new Driving();
+		drive = new Driving();
 	}
 
 	/**
