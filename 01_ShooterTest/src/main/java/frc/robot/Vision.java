@@ -49,7 +49,7 @@ class Vision {
 	}
 
 	/**
-	 * 
+	 * Calculates the optimal shooter speed based on the distance calculated in <code>getDistance</code>
 	 * @return The output speed of the motor controller from -1 to 1
 	 */
 	public double getShooterSpeed() {
@@ -63,9 +63,17 @@ class Vision {
 		return speed/100.0;
 	}
 
+	public double getHoodAngle() {
+		double x = getDistance();
+		double k = 1.0; //Some experimentally determined variable
+		return k*x; 
+	}
+
 	/**
 	 * <a href="https://docs.limelightvision.io/en/latest/cs_estimating_distance.html">Source Link</a>
-	 * @return Distance to target
+	 * <p><3</p><p><3</p><p><3</p><p><3</p><p><3</p><p><3</p><p><3</p><p><3</p><p><3</p><p><3</p><p><3</p>
+	 * <p> Uses the limelight to estimate distance </p>
+	 * @return Distance to target <<< IN METERS >>> 
 	 */
 	private double getDistance() {
 		double a2 = Math.toRadians(ty.getDouble(0.0));
@@ -78,11 +86,14 @@ class Vision {
 	 * @param controller
 	 */
 	private void updatePipeline(Joystick controller) {
-		if(controller.getPOV() == 270) {
+		if(controller.getPOV() == 270) { // Left on the D-Pad sets zoom to 1x
 			pipeline.setNumber(0);
 		}
-		if(controller.getPOV() == 90) {
+		if(controller.getPOV() == 90) { // Right on the D-Pad sets zoom to 2x
 			pipeline.setNumber(1);
+		}
+		if(controller.getPOV() == 180) { // Down on the D-Pad sets zoom to 3x
+			pipeline.setNumber(2);
 		}
 	}
 

@@ -7,10 +7,6 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-
-import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 
@@ -24,9 +20,11 @@ import edu.wpi.first.wpilibj.TimedRobot;
  */
 public class Robot extends TimedRobot {
 	private Joystick controller = new Joystick(1);
+	private Joystick extraJoy = new Joystick(5);
 	
-	private Turret turret;
 	private Vision vis;
+	private Turret turret;
+	private Hood hood;
 	private Driving drive;
 
 	/* private double speed = 0;
@@ -41,6 +39,7 @@ public class Robot extends TimedRobot {
 	public void robotInit() {
 		vis = new Vision();
 		turret = new Turret(vis);
+		hood = new Hood(vis);
 		drive = new Driving();
 	}
 
@@ -74,8 +73,9 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		turret.controllerMove(controller);
 		vis.runVision(controller);
+		turret.controllerMove(controller);
+		hood.controllerMove(extraJoy);
 		drive.controllerMove(controller);
 	}
 

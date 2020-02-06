@@ -14,7 +14,6 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -26,7 +25,7 @@ public class Turret {
 	private CANCoder falconEncoder;
 	private CANEncoder rotateEncoder;
 	private DigitalInput rotateLimit;
-	private double shooterSpeed, intakeSpeed;
+	private double shooterSpeed = 0, intakeSpeed = 0;
 	private PIDController falconPID, rotatePID;
 	private Vision vis;
 	private DecimalFormat df;
@@ -37,23 +36,19 @@ public class Turret {
 	private double targetSpeed = 0;
 	private double startSpeed = 0;
 
-	private boolean turretZeroed = false;
-
-	private Joystick extraJoy;
-	private Servo hoodServo;
-	private double hoodAngle = 0;
+	private boolean turretZeroed = false;	
 	
-	private final double maxSpeed = 0.9; // From 0 to 1
+	private final double maxSpeed = 0.95; // From 0 to 1
 	private final boolean feedForward = true;
 	private final boolean usePID = true;
 	private final boolean useVision = true;
-	private final boolean useHood = false;
 	
 	// Constants
 	private final double MAX_FALCON_ENCODER_RATE = 6_500; // Found experimentally
-	private final double TURRET_ENC_MAX = 150; // Found experimentally
+	private final double TURRET_ANGLE_MIN = -144; // Angle of the limit switch
+	private final double TURRET_ANGLE_MAX = 60; // To stop the wires from breaking
 	private final double FALCON_Kp = 1.2, FALCON_Ki = 0.2, FALCON_Kd = 0.0;
-	private final double ROTATE_Kp = 0.065, ROTATE_Ki = 0.0075, ROTATE_Kd = 0.0175;
+	private final double ROTATE_Kp = 0.065, ROTATE_Ki = 0.0075, ROTATE_Kd = 0.0175; // 0.065, 0.0075, 0.0175
 
 	public Turret(Vision vis) {
 		falconTalon = new TalonFX(PORTS.FALCON_TALON);
@@ -65,6 +60,7 @@ public class Turret {
 		axleEncoder = new Encoder(PORTS.AXLE_ENCODER_A, PORTS.AXLE_ENCODER_B);
 		axleEncoder.setDistancePerPulse(1.0/2048.0 * 60); // Shows encoder data in rpm
 		rotateEncoder = rotateSpark.getEncoder();
+		rotateEncoder.setPositionConversionFactor((1.0/7.0) * (1.0/5.0) * (16.0/132.0) * 360.0); // 1:7 gear ratio times 1:5 times 16:132 sprockets
 
 		rotateLimit = new DigitalInput(PORTS.ROTATE_LIMIT);
 		
@@ -75,18 +71,10 @@ public class Turret {
 
 		df = new DecimalFormat("0.##");
 
-		if(useHood) {
-			extraJoy = new Joystick(5);
-			hoodServo = new Servo(0);
-		}
-
 		turretInit();
 	}
 
 	private void turretInit() {
-		shooterSpeed = 0.0;
-		intakeSpeed = 0.0;
-
 		// Factory Default all hardware to prevent unexpected behaviour
 		falconTalon.configFactoryDefault();
 		intakeTalon.configFactoryDefault();
@@ -100,8 +88,6 @@ public class Turret {
 	public void controllerMove(Joystick controller) {
 		shoot(controller);
 		rotate(controller);
-		if(useHood)
-			adjustHood(extraJoy);
 	}
 
 	/**
@@ -191,7 +177,7 @@ public class Turret {
 
 		if(rampState == RampState.DOWN) {
 			if(shooterSpeed > targetSpeed) // If we have started the ramp down
-				shooterSpeed += 20.0/(rampPeriod*1000.0) * (targetSpeed - startSpeed); // 20 is because this iterates every 20 ms
+				shooterSpeed += 0.02 * (targetSpeed - startSpeed) / rampPeriod; // 20 is because this iterates every 20 ms
 			else {
 				rampState = RampState.NO_RAMP;
 				targetSpeed = 0;
@@ -199,8 +185,8 @@ public class Turret {
 			}
 		}
 		else if(rampState == RampState.UP) {
-			if(shooterSpeed < maxSpeed) // If we have started the ramp up
-				shooterSpeed += 20/(rampPeriod*1000) * (targetSpeed - startSpeed); // 20 is because this iterates every 20 ms
+			if(shooterSpeed < targetSpeed) // If we have started the ramp up
+				shooterSpeed += 0.02 * (targetSpeed - startSpeed) / rampPeriod; // 20 is because this iterates every 20 ms
 			else {
 				rampState = RampState.NO_RAMP;
 				targetSpeed = 0;
@@ -224,7 +210,7 @@ public class Turret {
 
 	private void setRampPeriod() {
 		double time = Math.abs(shooterSpeed - targetSpeed)*10.0;
-		 // Ramp down slower than you ramp up to protect motor
+		 // Make ramp down slower than ramp up to protect motor
 		if(rampState == RampState.DOWN)
 			time *= 1.5;
 
@@ -242,7 +228,7 @@ public class Turret {
 		}
 
 		if(!rotateLimit.get()) { // If limit is clicked, zero the encoder
-			rotateEncoder.setPosition(0);
+			rotateEncoder.setPosition(TURRET_ANGLE_MIN);
 		}
 
 		double leftTrigger = controller.getRawAxis(BUTTONS.GAMEPAD.LEFT_TRIGGER_AXIS);
@@ -251,7 +237,7 @@ public class Turret {
 		double speed = 0;
 		double speedMultiplier = 0.20;
 		if(leftTrigger > 0) { // Counterclockwise
-			if(rotateEncoder.getPosition() < TURRET_ENC_MAX) {
+			if(rotateEncoder.getPosition() < TURRET_ANGLE_MAX) {
 				speed = leftTrigger*leftTrigger*leftTrigger*speedMultiplier;
 			}
 		}
@@ -273,7 +259,7 @@ public class Turret {
 			else if(tx < -tolerance) {
 				// Since it's currently aimed to the right of the center
 				// of the target, we want to adjust by moving counterclockwise
-				if(rotateEncoder.getPosition() < TURRET_ENC_MAX) {
+				if(rotateEncoder.getPosition() < TURRET_ANGLE_MAX) {
 					speed = rotatePID.calculate(0, -tx);
 				}
 			} else {
@@ -285,43 +271,13 @@ public class Turret {
 
 	private void zeroTurret() {
         if(!rotateLimit.get()) { // Limit reads false when clicked
-			rotateEncoder.setPosition(0);
+			rotateEncoder.setPosition(TURRET_ANGLE_MIN);
             turretZeroed = true;
 			rotateSpark.set(0);
 			System.out.println("Turret zeroed");
         }
         else{
 			rotateSpark.set(-0.2); // Slowly rotate clockwise ... until limit is hit
-		}
-	}
-	
-	private void adjustHood(Joystick controller) {
-		boolean up = controller.getRawButtonPressed(BUTTONS.BIG_JOY.RIGHT_HANDLE_BUTTON);
-		boolean down = controller.getRawButtonPressed(BUTTONS.BIG_JOY.LEFT_HANDLE_BUTTON);
-		boolean upIncrement = controller.getRawButtonPressed(BUTTONS.BIG_JOY.UP_HANDLE_BUTTON);
-		boolean downIncrement = controller.getRawButtonPressed(BUTTONS.BIG_JOY.DOWN_HANDLE_BUTTON);
-		final double initAngle = hoodAngle;
-
-		final double increment = 10;
-		final double maxAngle = 120;
-		final double minAngle = 0;
-
-		if(up) {
-			hoodAngle = maxAngle;
-		}
-		else if (down) {
-			hoodAngle = minAngle;
-		}
-		else if(upIncrement && hoodAngle <= maxAngle - increment) {
-			hoodAngle += increment;
-		}
-		else if (downIncrement && hoodAngle >= minAngle + increment) {
-			hoodAngle -= increment;
-		}
-
-		if(hoodAngle != initAngle) {
-			System.out.println("Setting hood position to " + df.format(hoodAngle) + "deg");
-			hoodServo.setAngle(hoodAngle);
 		}
 	}
 }
