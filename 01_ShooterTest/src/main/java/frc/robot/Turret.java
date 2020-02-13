@@ -91,7 +91,7 @@ public class Turret {
 	}
 
 	/**
-	 * Sets the speed of the shooter
+	 * Set the shooter speed based on controller input
 	 * @param controller
 	 */
 	private void shoot(Joystick controller) {
@@ -188,6 +188,7 @@ public class Turret {
 			}
 		}
 	}
+	
 	private void setIntakeSpeed(Joystick controller) {
 		double speedIncrement = 0.2;
 

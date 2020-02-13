@@ -45,7 +45,7 @@ class Limelight {
 	 */
 	private void limelightInit() {
 		ledMode.setNumber(1); // Set it to off
-		pipeline.setNumber(0); // Set it to Standard
+		pipeline.setNumber(0); // Sets network tables pipeline to Standard (1x Zoom)
 		isTracking = false; // Since LED is off, we are not tracking
 		firstRun = false;
 	}
@@ -55,7 +55,7 @@ class Limelight {
 	 * @return The output speed of the motor controller from 0 to 1
 	 */
 	public double getShooterSpeed() {
-		// Quadratic Relationship of distance to speed
+		// Quartic Relationship of distance to speed
 		double a = 0.00741,
 			b = -0.221,
 			c = 2.66,
@@ -63,6 +63,9 @@ class Limelight {
 			e = 79.7,
 			x = getDistance();
 		double speed = a*x*x*x*x + b*x*x*x + c*x*x + d*x + e;
+
+		// If we're using the hood and it is down, set the speed to the data
+		// that we obtained in the testing
 		if(useHood && hoodDown) {
 			a = 0.402;
 			b = -3.6;
@@ -70,12 +73,6 @@ class Limelight {
 			speed = a*x*x + b*x + c;
 		}
 		return speed/100.0; // Convert from percent to decimal value from 0 to 1
-	}
-
-	public double getHoodAngle() {
-		double x = getDistance();
-		double k = 1.0; //Some experimentally determined variable
-		return k*x; 
 	}
 
 	/**
@@ -91,7 +88,7 @@ class Limelight {
 	}
 
 	/**
-	 * Toggles the pipeline between standard and 2x_zoom when D-Pad is pressed
+	 * Changes the Limelight zoom when the D-Pad is pressed
 	 * @param controller
 	 */
 	private void updatePipeline(Joystick controller) {
@@ -109,6 +106,10 @@ class Limelight {
 		}
 	}
 
+	/**
+	 * Turns the Limelight lights on or off
+	 * @param controller
+	 */
 	private void toggleTracking(Joystick controller) {
 		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.START_BUTTON)) {
 			ledMode.setNumber(isTracking ? 1 : 3);
