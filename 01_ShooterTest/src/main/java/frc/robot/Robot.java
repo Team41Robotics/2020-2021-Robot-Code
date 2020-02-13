@@ -22,14 +22,12 @@ public class Robot extends TimedRobot {
 	private Joystick controller = new Joystick(1);
 	private Joystick extraJoy = new Joystick(5);
 	
-	private Vision vis;
+	private Limelight lime;
 	private Turret turret;
 	private Hood hood;
 	private Driving drive;
 
-	/* private double speed = 0;
-	private TalonSRX talonTest = new TalonSRX(5);
-	private Encoder encTest = new Encoder(7,8); */
+	public final boolean useHood = true;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -37,9 +35,9 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void robotInit() {
-		vis = new Vision();
-		turret = new Turret(vis);
-		hood = new Hood(vis);
+		lime = new Limelight(useHood);
+		turret = new Turret(lime);
+		if(useHood) hood = new Hood(lime);
 		drive = new Driving();
 	}
 
@@ -73,9 +71,9 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		vis.runVision(controller);
+		lime.runLimelight(controller);
 		turret.controllerMove(controller);
-		hood.controllerMove(extraJoy);
+		if(useHood) hood.controllerMove(extraJoy);
 		drive.controllerMove(controller);
 	}
 

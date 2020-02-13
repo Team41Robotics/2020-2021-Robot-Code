@@ -8,9 +8,12 @@ class PORTS {
 	TALON_LF = 11,
 	TALON_LB = 5,
 	ROTATE_SPARK = 4,
+	// DIO
 	AXLE_ENCODER_A = 0,
 	AXLE_ENCODER_B = 1,
-	ROTATE_LIMIT = 7;
+	ROTATE_LIMIT = 7,
+	// PWM
+	HOOD_SERVO = 6;
 }
 
 class BUTTONS {
@@ -36,9 +39,29 @@ class BUTTONS {
 		RIGHT_JOY_Y_AXIS = 5;
 	}
 	class BIG_JOY {
-		public final static int UP_HANDLE_BUTTON = 3,
+		public final static int TRIGGER = 1,
+		UP_HANDLE_BUTTON = 3,
 		DOWN_HANDLE_BUTTON = 2,
 		LEFT_HANDLE_BUTTON = 4,
 		RIGHT_HANDLE_BUTTON = 5;
+	}
+}
+
+class COORDINATES {
+	public final static Point
+		START_TOP = new Point(0,0),
+		START_MIDDLE = new Point(0,0),
+		START_BOTTOM = new Point(0,0),
+		GOAL = new Point(0,0),
+		TRENCH = new Point(0,0),
+		DISPENSER = new Point(0,0);
+}
+
+class Point {
+	public final double x, y;
+
+	public Point(double x, double y) {
+		this.x = x;
+		this.y = y;
 	}
 }

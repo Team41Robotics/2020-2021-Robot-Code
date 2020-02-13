@@ -4,15 +4,12 @@ import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Joystick;
 
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.sensors.CANCoder;
 
 public class Driving {
 	
 	private WPI_TalonSRX talonRF, talonRB, talonLF, talonLB;
-	private TalonSRX test;
-	private CANCoder leftEncoder, rightEncoder;
 
 	private SpeedControllerGroup leftSpeedCG, rightSpeedCG;
 	private DifferentialDrive difDrive;
@@ -27,8 +24,8 @@ public class Driving {
 		talonLF = new WPI_TalonSRX(PORTS.TALON_LF);
 		talonLB = new WPI_TalonSRX(PORTS.TALON_LB);
 
-		rightEncoder = new CANCoder(PORTS.TALON_RB);
-		leftEncoder = new CANCoder(PORTS.TALON_LB);
+		talonRB.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
+		talonLB.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
 
 		leftSpeedCG = new SpeedControllerGroup(talonLF, talonLB);
 		rightSpeedCG = new SpeedControllerGroup(talonRF, talonRB);
@@ -48,8 +45,8 @@ public class Driving {
 		double velocityLeft = angular*(turnRadius + wheelAxis/2);
 		double velocityRight = angular*(turnRadius - wheelAxis/2);
 
-		double vl = leftEncoder.getVelocity();
-		double vr = rightEncoder.getVelocity();
+		double vl = talonLB.getSelectedSensorVelocity();
+		double vr = talonRB.getSelectedSensorVelocity();
 
 		if(vl < velocityLeft && leftSpeed < 1) { //Replace this with PID later?
 			leftSpeed += .001;
@@ -72,7 +69,7 @@ public class Driving {
 
 		double speedMultiplier = 0.55;
 
-		// System.out.println("Left: " + leftEncoder.getPosition() + " Right: " + rightEncoder.getPosition());
+		// System.out.println("Left: " + (-talonLB.getSelectedSensorPosition()) + " Right: " + talonRB.getSelectedSensorPosition());
 		difDrive.tankDrive(-leftAxis*speedMultiplier, -rightAxis*speedMultiplier);
 		//if(leftAxis > 0) driveVelocity(0, .5); //.5 radians per second
 	}
