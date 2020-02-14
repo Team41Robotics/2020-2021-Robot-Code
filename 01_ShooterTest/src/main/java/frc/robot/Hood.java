@@ -20,6 +20,7 @@ class Hood {
 
 	public Hood(Limelight lime) {
 		hoodServo = new Servo(PORTS.HOOD_SERVO);
+		hoodServo.setAngle(minAngle);
 
 		df = new DecimalFormat("0.##");
 
