@@ -131,6 +131,7 @@ public class Turret {
 		SmartDashboard.putNumber("falcon current", falconTalon.getSupplyCurrent());
 		SmartDashboard.putNumber("falcon encoder rate", falconTalon.getSelectedSensorVelocity());
 		SmartDashboard.putNumber("rotate encoder", rotateEncoder.getPosition());
+		SmartDashboard.putBoolean("rotate limit", !rotateLimit.get());
 
 	}
 
@@ -239,7 +240,7 @@ public class Turret {
 		double rightTrigger = controller.getRawAxis(BUTTONS.GAMEPAD.RIGHT_TRIGGER_AXIS);
 
 		double speed = 0;
-		double speedMultiplier = 0.20;
+		double speedMultiplier = 0.30;
 		if(leftTrigger > 0) { // Counterclockwise
 			if(rotateEncoder.getPosition() < TURRET_ANGLE_MAX) {
 				speed = leftTrigger*leftTrigger*leftTrigger*speedMultiplier;

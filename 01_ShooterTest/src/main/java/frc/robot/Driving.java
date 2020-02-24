@@ -39,11 +39,12 @@ public class Driving {
 	 * @param angular Angular velocity to rotate at (in rad/s)
 	 */
 	public void driveVelocity(double linear, double angular) {
-		double wheelAxis = 0.5969; //meters, change to constant later
+		final double wheelBaseRadius = 0.5969; // Have to find this !!!
+		final double wheelRadius = 0.1; // Have to find this !!!
 		double turnRadius = linear/angular; //v = r*omega
 
-		double velocityLeft = angular*(turnRadius + wheelAxis/2);
-		double velocityRight = angular*(turnRadius - wheelAxis/2);
+		double velocityLeft = angular*(turnRadius + wheelBaseRadius/2)/wheelRadius;
+		double velocityRight = angular*(turnRadius - wheelBaseRadius/2)/wheelRadius;
 
 		double vl = talonLB.getSelectedSensorVelocity();
 		double vr = talonRB.getSelectedSensorVelocity();

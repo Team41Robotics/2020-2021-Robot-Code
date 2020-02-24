@@ -5,6 +5,19 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+/**
+ * TODO List:
+ * 1) Solve pi realsense boot issue
+ * 2) Test realsense coordinate system
+ * 3) Test autonomous movement
+ * 4) Transfer code to final robot
+ * 5) Collect shooter data for final robot
+ * 6) Boot pi into CLI mode
+ * 7) Shooter scanning using realsesne coord system                                   
+ */
+
+
+
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -19,13 +32,14 @@ import edu.wpi.first.wpilibj.TimedRobot;
  * directory.
  */
 public class Robot extends TimedRobot {
-	private Joystick controller = new Joystick(1);
-	private Joystick extraJoy = new Joystick(5);
+	private final Joystick controller = new Joystick(1);
+	private final Joystick extraJoy = new Joystick(5);
 	
 	private Limelight lime;
 	private Turret turret;
 	private Hood hood;
 	private Driving drive;
+	private Music music;
 
 	public final boolean useHood = true;
 
@@ -39,6 +53,7 @@ public class Robot extends TimedRobot {
 		turret = new Turret(lime);
 		if(useHood) hood = new Hood(lime);
 		drive = new Driving();
+		music = new Music();
 	}
 
 	/**
@@ -75,6 +90,9 @@ public class Robot extends TimedRobot {
 		turret.controllerMove(controller);
 		if(useHood) hood.controllerMove(extraJoy);
 		drive.controllerMove(controller);
+		
+		// music.playMusic();
+
 	}
 
 	/**

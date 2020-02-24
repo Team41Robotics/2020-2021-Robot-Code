@@ -48,10 +48,10 @@ class BUTTONS {
 	class DRIVER_STATION {
 		public final static int 
 		// Axes
-		LEFT_DIAL = 12345,
-		RIGHT_DIAL = 12345,
-		LEFT_SLIDER = 12345,
-		RIGHT_SLIDER = 12345,
+		LEFT_DIAL = 3,
+		RIGHT_DIAL = 4,
+		LEFT_SLIDER = 0,
+		RIGHT_SLIDER = 1,
 		// Buttons in the column (top to bottom)
 		COL_BUTTON_1 = 0,
 		COL_BUTTON_2 = 1,
@@ -65,12 +65,12 @@ class BUTTONS {
 		TOGGLE_SWITCH_2 = 7,
 		TOGGLE_SWITCH_3 = 8,
 		// Momentary switches
-		MOMENTARY_SWITCH_1_UP = 9,
-		MOMENTARY_SWITCH_1_DOWN = 10,
-		MOMENTARY_SWITCH_2_UP = 11,
-		MOMENTARY_SWITCH_2_DOWN = 12,
-		MOMENTARY_SWITCH_3_UP = 13,
-		MOMENTARY_SWITCH_3_DOWN = 14;
+		ROCKER_1_UP = 9,
+		ROCKER_1_DOWN = 10,
+		ROCKER_2_UP = 11,
+		ROCKER_2_DOWN = 12,
+		ROCKER_3_UP = 13,
+		ROCKER_3_DOWN = 14;
 	}
 }
 
