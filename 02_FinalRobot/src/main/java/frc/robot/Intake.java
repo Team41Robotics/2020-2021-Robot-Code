@@ -55,6 +55,11 @@ class Intake {
 		setIntakeArmSpeed();
 		toggleIntakeArm();
 
+		SmartDashboard.putNumber("shooter intake speed", shooterIntakeSpeed);
+		SmartDashboard.putNumber("elevator speed top", elevatorSpeedTop);
+		SmartDashboard.putNumber("elevator speed bottom", elevatorSpeedBottom);
+		SmartDashboard.putNumber("intake arm speed", intakeArmSpeed);
+		
 		SmartDashboard.putBoolean("elevator limit top", elevatorLimitTop.get());
 		SmartDashboard.putBoolean("elevator limit middle", elevatorLimitMiddle.get());
 		SmartDashboard.putBoolean("elevator limit bottom", elevatorLimitBottom.get());
@@ -68,29 +73,33 @@ class Intake {
 			elevatorSpeedBottom = 0;
 		}
 		
-		
+		// Shooter Intake
 		double shooterIntakeSpeedIncrement = 0.8;
-		double elevatorSpeedTopIncrement = 0.5;
-
-		// Change intakeSpeed using the A and B buttons
-		// B button increases shooterSpeed in the shooting direction
-		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.B_BUTTON) && shooterIntakeSpeed < 1.0) {
-			shooterIntakeSpeed += shooterIntakeSpeedIncrement;
-			elevatorSpeedTop += elevatorSpeedTopIncrement;
+		if(extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.LEFT_BACK_BUTTON)) {
+			if(shooterIntakeSpeed == shooterIntakeSpeedIncrement)
+				shooterIntakeSpeed = 0;
+			else
+				shooterIntakeSpeed = shooterIntakeSpeedIncrement;
 			System.out.println("Shooter Intake Speed -> " + Math.round(shooterIntakeSpeed*100.0) + "%");
+		}
+		shooterIntakeTalon.set(ControlMode.PercentOutput, -shooterIntakeSpeed);
+		
+		// Elevator Top
+		double elevatorSpeedTopIncrement = 0.5;
+		// B button increases shooterSpeed in the shooting direction
+		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.B_BUTTON) && elevatorSpeedTop < 1.0) {
+			elevatorSpeedTop += elevatorSpeedTopIncrement;
 			System.out.println("Elevator Speed Top -> " + Math.round(elevatorSpeedTop*100.0) + "%");
 		}
 		// A button decreases shooterSpeed towards the reverse direction
-		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.A_BUTTON) && shooterIntakeSpeed >= 0) {
-			shooterIntakeSpeed -= shooterIntakeSpeedIncrement;
+		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.A_BUTTON) && elevatorSpeedTop >= 0) {
 			elevatorSpeedTop -= elevatorSpeedTopIncrement;
-			System.out.println("Shooter Intake Speed -> " + Math.round(shooterIntakeSpeed*100.0) + "%");
 			System.out.println("Elevator Speed Top -> " + Math.round(elevatorSpeedTop*100.0) + "%");
 		}
-		shooterIntakeTalon.set(ControlMode.PercentOutput, -shooterIntakeSpeed);
 		elevatorSparkTop.set(elevatorSpeedTop);
 
-		double elevatorSpeedBottomIncrement = 0.05;
+		// Elevator Bottom
+		double elevatorSpeedBottomIncrement = 0.3;
 		if(extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.RIGHT_FRONT_BUTTON)) {
 			elevatorSpeedBottom += elevatorSpeedBottomIncrement;
 			System.out.println("Elevator Speed Bottom -> " + Math.round(elevatorSpeedBottom*100.0) + "%");
@@ -103,21 +112,19 @@ class Intake {
 		elevatorSparkBottom.set(elevatorSpeedBottom);
 	}
 	private void setIntakeArmSpeed() {
-		double intakeArmSpeedIncrement = 0.2;
-		if(controller.getRawButtonPressed(BUTTONS.BIG_JOY.LEFT_FRONT_BUTTON)) {
-			intakeArmSpeed += intakeArmSpeedIncrement;
+		double intakeArmSpeedIncrement = 0.7;
+		if(extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.LEFT_FRONT_BUTTON)) {
+			if(intakeArmSpeed == intakeArmSpeedIncrement)
+				intakeArmSpeed = 0;
+			else
+				intakeArmSpeed = intakeArmSpeedIncrement;
 			System.out.println("Intake Arm Speed -> " + Math.round(intakeArmSpeed*100.0) + "%");
 		}
-		if(controller.getRawButtonPressed(BUTTONS.BIG_JOY.LEFT_BACK_BUTTON)) {
-			intakeArmSpeed -= intakeArmSpeedIncrement;
-			System.out.println("Intake Arm Speed -> " + Math.round(intakeArmSpeed*100.0) + "%");
-		}
-		
 		intakeArmSpark.set(intakeArmSpeed);
 	}
 	
 	private void toggleIntakeArm() {
-		if(controller.getRawButtonPressed(BUTTONS.BIG_JOY.TRIGGER)) {
+		if(extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.TRIGGER)) {
 			intakeArmSol.set(intakeArmForward ? Value.kReverse : Value.kForward);
 			intakeArmForward = !intakeArmForward;
 			System.out.println("Intake Arm -> " + (intakeArmForward ? "Forward" : "Reverse"));

@@ -79,30 +79,49 @@ class BUTTONS {
 	// Custom Driver Station
 	class DRIVER_STATION {
 		public final static int 
+		// First Driverstation
 		// Axes
-		LEFT_DIAL = 3,
-		RIGHT_DIAL = 4,
-		LEFT_SLIDER = 0,
-		RIGHT_SLIDER = 1,
+		L_JOY_X_AXIS = 0,
+		L_JOY_Y_AXIS = 1,
+		L_JOY_ROTATE = 2,
+		R_JOY_X_AXIS = 0,
+		R_JOY_Y_AXIS = 1,
+		R_JOY_ROTATE = 2,
+		// Buttons
+		L_JOY_TRIGGER = 1,
+		L_JOY_BUTTON_DOWN = 2,
+		L_JOY_BUTTON_LEFT = 3,
+		L_JOY_BUTTON_RIGHT = 4,
+		R_JOY_TRIGGER = 1,
+		R_JOY_BUTTON_DOWN = 2,
+		R_JOY_BUTTON_LEFT = 3,
+		R_JOY_BUTTON_RIGHT = 4,
+
+		// Second Driverstation
+		// Axes
+		LEFT_DIAL = 3, // Manual Shoot Speed Control (0-MAX)
+		RIGHT_DIAL = 4, // Lift Gear Shit Part 2
+		LEFT_SLIDER = 0, // 
+		RIGHT_SLIDER = 1, // 
 		// Buttons in the column (top to bottom)
-		COL_BUTTON_1 = 0,
-		COL_BUTTON_2 = 1,
-		COL_BUTTON_3 = 2,
-		COL_BUTTON_4 = 3,
+		COL_BUTTON_1 = 0, // Music Using Falcon
+		COL_BUTTON_2 = 1, // 
+		COL_BUTTON_3 = 2, // 
+		COL_BUTTON_4 = 3, // Hood Up/Down Toggle
 		// Left and right on/off buttons
-		LEFT_TOGGLE_BUTTON = 4,
-		RIGHT_TOGGLE_BUTTON = 5,
+		LEFT_TOGGLE_BUTTON = 4, // Shooter Speed Auto/Manual Toggle
+		RIGHT_TOGGLE_BUTTON = 5, // Lift Gear Shift Part 1
 		// Momentary switches
-		ROCKER_1_UP = 6,
-		ROCKER_1_DOWN = 7,
-		ROCKER_2_UP = 8,
-		ROCKER_2_DOWN = 9,
-		ROCKER_3_UP = 10,
-		ROCKER_3_DOWN = 11,
+		ROCKER_L_UP = 6, // Turret Clockwise
+		ROCKER_L_DOWN = 7, // Turret Counterclockwise
+		ROCKER_M_UP = 8, // Elevator Top Up
+		ROCKER_M_DOWN = 9, // Elevator Top Down
+		ROCKER_R_UP = 10, // Elevator Bottom Up
+		ROCKER_R_DOWN = 11, // Elevator Bottom Down
 		// On/off switches
-		TOGGLE_SWITCH_1 = 12,
-		TOGGLE_SWITCH_2 = 13,
-		TOGGLE_SWITCH_3 = 14,
+		TOGGLE_SWITCH_L = 12, // Limelight On/Off
+		TOGGLE_SWITCH_M = 13, // Hood Auto/Manual
+		TOGGLE_SWITCH_R = 14, // 
 		// Touch Displays
 		TOP_DISPLAY = 0,
 		BOTTOM_DISPLAY = 1;

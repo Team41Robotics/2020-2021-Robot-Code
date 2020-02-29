@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -13,7 +14,9 @@ public class Driving {
 
 	// For velocity drive
 	private double leftSpeed = 0;
-	private double rightSpeed = 0; 
+	private double rightSpeed = 0;
+
+	private final double maxAcc = 0.0075, maxDec = 0.015;
 
 	public Driving() {
 		controller = Robot.controller;
@@ -27,17 +30,86 @@ public class Driving {
 	public void controllerMove() {
 		double leftAxis = controller.getRawAxis(BUTTONS.GAMEPAD.L_JOY_Y_AXIS);
 		double rightAxis = controller.getRawAxis(BUTTONS.GAMEPAD.R_JOY_Y_AXIS);
+		
+		final double deadband = 0.05;
+		if(Math.abs(leftAxis) < deadband)
+			leftAxis = 0;
+		if(Math.abs(rightAxis) < deadband)
+			rightAxis = 0;
 
-		double speedMultiplier = 0.25;
+		final double speedMultiplier = 0.5;
+		leftAxis *= speedMultiplier;
+		rightAxis *= speedMultiplier;
 
-		drive(leftAxis*speedMultiplier, rightAxis*speedMultiplier);
+		// Emergency stop
+		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.L_JOY_CLICK)) {
+			leftSpeed = 0;
+			rightSpeed = 0;
+		}
+			
+		double tolerance = 0.05;
+		if(Math.abs(leftSpeed - leftAxis) > tolerance) {
+			double delta;
+			double direction = 1;
+			if(leftAxis < leftSpeed)
+				direction = -1;
+				
+			if(Math.abs(leftSpeed) < Math.abs(leftAxis))
+				delta = maxAcc;
+			else
+				delta = maxDec;
+			leftSpeed += delta*direction;
+		}
+		else {
+			leftSpeed = leftAxis;
+		}
+
+		if(Math.abs(rightSpeed - rightAxis) > tolerance) {
+			double delta;
+			double direction = 1;
+			if(rightAxis < rightSpeed)
+				direction = -1;
+
+			if(Math.abs(rightSpeed) < Math.abs(rightAxis))
+				delta = maxAcc;
+			else
+				delta = maxDec;
+			rightSpeed += delta*direction;
+		}
+		else {
+			rightSpeed = rightAxis;
+		}
+
+		// For safety
+		if(leftSpeed > 1)
+			leftSpeed = 1;
+		else if(leftSpeed < -1)
+			leftSpeed = -1;
+		if(rightSpeed > 1)
+			rightSpeed = 1;
+		else if(rightSpeed < -1)
+			rightSpeed = -1;
+		
+		drive();
+		SmartDashboard.putNumber("left speed", leftSpeed);
+		SmartDashboard.putNumber("right speed", rightSpeed);
+		SmartDashboard.putNumber("left axis", leftAxis);
+		SmartDashboard.putNumber("right axis", rightAxis);
 	}
 
-	private void drive(double leftSpeed, double rightSpeed) {
-		sparkRF.set(-rightSpeed);
-		sparkRB.set(-rightSpeed);
-		sparkLF.set(leftSpeed);
-		sparkLB.set(leftSpeed);
+	private void drive() {
+		double rightDriveSpeed = rightSpeed;
+		// if(Math.abs(rightDriveSpeed) < 0.02)
+		// 	rightDriveSpeed = 0;
+
+		double leftDriveSpeed = leftSpeed;
+		// if(Math.abs(leftDriveSpeed) < 0.02)
+		// 	leftDriveSpeed = 0;
+
+		sparkRF.set(-rightDriveSpeed);
+		sparkRB.set(-rightDriveSpeed);
+		sparkLF.set(leftDriveSpeed);
+		sparkLB.set(leftDriveSpeed);
 	}
 
 	/**
@@ -67,7 +139,7 @@ public class Driving {
 		else if(vr > velocityRight && rightSpeed > -1)
 			rightSpeed -= .001; */
 
-		drive(leftSpeed, rightSpeed);
+		drive();
 	}
 
 }

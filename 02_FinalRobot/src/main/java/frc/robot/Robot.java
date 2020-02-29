@@ -96,13 +96,14 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		lime.runLimelight();
-		turret.controllerMove();
-		if(useHood) hood.controllerMove();
-		drive.controllerMove();
-		intake.controllerMove();
-		// climb.controllerMove();
+		// lime.runLimelight();
+		// turret.controllerMove();
+		// if(useHood) hood.controllerMove();
+		// drive.controllerMove();
+		// intake.controllerMove();
+		climb.controllerMove();
 
 		comp.start();
+		// comp.stop();
 	}
 }

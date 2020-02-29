@@ -47,9 +47,9 @@ public class Turret {
 	// Constants
 	private final double MAX_FALCON_ENCODER_RATE = 6_500; // Found experimentally
 	private final double TURRET_ANGLE_CLOCKWISE_MAX = -113; // Max clockwise angle
-	private final double TURRET_ANGLE_COUNTERCLOCKWISE_MAX = 200; // Max counterclockwise angle
+	private final double TURRET_ANGLE_COUNTERCLOCKWISE_MAX = 100; // Max counterclockwise angle
 	private final double FALCON_Kp = 1.2, FALCON_Ki = 0.2, FALCON_Kd = 0.0;
-	private final double ROTATE_Kp = 0.065, ROTATE_Ki = 0.0075, ROTATE_Kd = 0.0175; // 0.065, 0.0075, 0.0175
+	private final double ROTATE_Kp = 0.025, ROTATE_Ki = 0.0075, ROTATE_Kd = 0.0; // 0.065, 0.0075, 0.0175
 
 	public Turret() {
 		controller = Robot.controller;
@@ -58,8 +58,6 @@ public class Turret {
 		rotateSpark = new CANSparkMax(PORTS.ROTATE_SPARK, MotorType.kBrushless);
 		
 		falconTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
-		// falconTalon.configPulseWidthPeriod_EdgesPerRot(2048, 0);
-		// falconEncoder.setDistancePerPulse(1.0/2048.0 * 60); // Shows encoder data in gearRatio*rpm
 		shaftEncoder = new Encoder(PORTS.SHAFT_ENCODER_A, PORTS.SHAFT_ENCODER_B);
 		shaftEncoder.setDistancePerPulse(1.0/2048.0 * 60); // Shows encoder data in rpm
 		rotateEncoder = rotateSpark.getEncoder();

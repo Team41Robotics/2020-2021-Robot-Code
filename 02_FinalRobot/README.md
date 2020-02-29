@@ -26,5 +26,19 @@ This is the source code for what will be running on the final robot in the 2020 
 - Big Joystick Up Handle Button = + Hood move increment
 - Big Joystick Down Handle Button = - Hood move increment 
 
-**Driver Station**
-- Coming soon
+**Driver Station One**
+- Driving
+- Shooting
+	- Turret Movement
+- Intake
+- 
+**Driver Station Two**
+- Elevator Top Up
+- Elevator Top Down
+- Elevator Bottom Up
+- Elevator Bottom Down
+- Turret Rotation
+- Shooter Speed (Manual and Auto)
+- Limelight Control
+- Hood Control (Manual and Auto)
+- Lift Gear Shift

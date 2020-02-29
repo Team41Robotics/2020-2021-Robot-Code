@@ -26,7 +26,6 @@ class Hood {
 		hoodServo = new Servo(PORTS.HOOD_SERVO);
 		hoodServo.setAngle(minAngle);
 
-
 		this.lime = Robot.lime;
 	}
 
@@ -39,7 +38,7 @@ class Hood {
 
 		maxHoodPos();
 		if(!autoAdjust || !lime.isTracking())
-			incrementHoodPos();	
+			incrementHoodPos();
 	}
 
 	private void maxHoodPos() {
