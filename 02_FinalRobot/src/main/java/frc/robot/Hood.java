@@ -1,98 +1,64 @@
 package frc.robot;
 
-import java.text.DecimalFormat;
-
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 class Hood {
-	private DecimalFormat df;
-
-	private Joystick extraJoy;
+	private Joystick driverstation;
 	private Servo hoodServo;
 
-	private boolean autoAdjust = true;
-	private double hoodAngle = 0;
-	private final double increment = 10;
 	private final double maxAngle = 110;
 	private final double minAngle = 0;
+	private double hoodAngle;
+	private boolean hoodDown;
 
 	private Limelight lime;
 
 	public Hood() {
-		df = new DecimalFormat("0.##");
-
-		extraJoy = Robot.extraJoy;
+		driverstation = Robot.driverstation;
 		hoodServo = new Servo(PORTS.HOOD_SERVO);
 		hoodServo.setAngle(minAngle);
+		hoodAngle = minAngle;
+		hoodDown = true;
 
 		this.lime = Robot.lime;
 	}
 
 	public void controllerMove() {
-		// Use trigger to toggle auto adjust
-		/* if(extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.TRIGGER)) {
-			autoAdjust = !autoAdjust;
-			System.out.println("Hood Auto Adjust -> " + (autoAdjust ? "On" : "Off"));
-		} */
-
 		maxHoodPos();
-		if(!autoAdjust || !lime.isTracking())
-			incrementHoodPos();
+
+		SmartDashboard.putBoolean("Hood Down", hoodDown);
 	}
 
 	private void maxHoodPos() {
-		boolean up = false, down = false;
 		double distance = lime.getDistance();
 
-		boolean change = false;
+		boolean toggle = false;
+		boolean autoAdjust = driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_R);
 
 		if(autoAdjust && lime.isTracking()) {
 			// Only auto-adjust if we are not already adjusted
 			// and are at the right distance
-			up = distance < 4 && hoodAngle != maxAngle;
-			down = distance > 4.25 && hoodAngle != 0;
+			if(hoodDown)
+				toggle = distance < 4;
+			else
+				toggle = distance > 4.25;
 		}
-		else { // If we're not auto adjusting, use the controller
-			up = extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.RIGHT_HANDLE_BUTTON);
-			down = extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.LEFT_HANDLE_BUTTON);
-		}
+		else // If we're not auto adjusting, use the controller
+			toggle = driverstation.getRawButtonPressed(BUTTONS.DRIVER_STATION.COL_BUTTON_4);
 
-		// Sets the hood to the up position so the ball does not hit it
-		if(up) {
-			hoodAngle = maxAngle;
-			lime.setHoodDown(false); // Adjusts limelight shot speed calculation
-			change = true;
-		}
-		// Sets the hood to the down position so that it changes the ball angle
-		else if (down) {
-			hoodAngle = minAngle;
-			lime.setHoodDown(true); // Adjusts limelight shot speed calculation
-			change = true;
-		}
-
-		if(change) {
-			System.out.println("Hood Pos -> " + (up ? "Up" : "Down"));
-			hoodServo.setAngle(hoodAngle);
-		}
+		if(toggle)
+			toggleHoodDown();
 	}
-	private void incrementHoodPos() {
-		boolean upIncrement = extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.UP_HANDLE_BUTTON);
-		boolean downIncrement = extraJoy.getRawButtonPressed(BUTTONS.BIG_JOY.DOWN_HANDLE_BUTTON);
-		boolean change = false;
 
-		if(upIncrement && hoodAngle <= maxAngle - increment) {
-			hoodAngle += increment;
-			change = true;
-		}
-		else if (downIncrement && hoodAngle >= minAngle + increment) {
-			hoodAngle -= increment;
-			change = true;
-		}
+	private void toggleHoodDown() {
+		hoodDown = !hoodDown;
+		lime.setHoodDown(hoodDown);
 
-		if(change) {
-			System.out.println("Hood Pos -> " + df.format(hoodAngle) + "°");
-			hoodServo.setAngle(hoodAngle);
-		}
+		System.out.println("Hood -> " + (hoodDown ? "Down" : "Up"));
+
+		hoodAngle = hoodDown ? minAngle : maxAngle;
+		hoodServo.setAngle(hoodAngle);
 	}
 }

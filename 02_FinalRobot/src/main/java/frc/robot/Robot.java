@@ -32,6 +32,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
 /**
@@ -42,10 +43,13 @@ import edu.wpi.first.wpilibj.TimedRobot;
  * directory.
  */
 public class Robot extends TimedRobot {
-	public final static boolean useHood = false;
+	public final static boolean useHood = true;
 
 	public static Joystick controller = new Joystick(1);
 	public static Joystick extraJoy = new Joystick(5);
+	public static Joystick driverstation = new Joystick(2);
+	public static Joystick leftJoy = new Joystick(3);
+	public static Joystick rightJoy = new Joystick(4);
 	
 	public static final Limelight lime = new Limelight();
 	public static final Turret turret = new Turret();
@@ -88,7 +92,6 @@ public class Robot extends TimedRobot {
 	@Override
 	public void teleopInit() {
 		//System.out.println("Teleop initated");
-		
 	}
 
 	/**
@@ -96,12 +99,12 @@ public class Robot extends TimedRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		// lime.runLimelight();
-		// turret.controllerMove();
-		// if(useHood) hood.controllerMove();
-		// drive.controllerMove();
-		// intake.controllerMove();
-		climb.controllerMove();
+		lime.runLimelight();
+		turret.controllerMove();
+		if(useHood) hood.controllerMove();
+		drive.controllerMove();
+		intake.controllerMove();
+		// climb.controllerMove();
 
 		comp.start();
 		// comp.stop();

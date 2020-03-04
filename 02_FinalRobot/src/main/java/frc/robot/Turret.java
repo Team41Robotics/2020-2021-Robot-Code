@@ -1,7 +1,5 @@
 package frc.robot;
 
-import java.text.DecimalFormat;
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -18,7 +16,7 @@ import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Turret {
-	private Joystick controller;
+	private Joystick driverstation;
 	private TalonFX falconTalon;
 	private CANSparkMax rotateSpark;
 	private Encoder shaftEncoder;
@@ -27,12 +25,11 @@ public class Turret {
 	private double shooterSpeed = 0;
 	private PIDController falconPID, rotatePID;
 	private Limelight lime;
-	private DecimalFormat df;
 	// private Orchestra orchestra;
 
 	private enum Direction {CLOCKWISE, COUNTERCLOCKWISE};
-	private enum RampState {NO_RAMP, UP, DOWN};
-	private RampState rampState = RampState.NO_RAMP;
+	private enum RAMP_STATE {NO_RAMP, UP, DOWN};
+	private RAMP_STATE rampState = RAMP_STATE.NO_RAMP;
 	private double rampPeriod = -1;
 	private double targetSpeed = 0;
 	private double startSpeed = 0;
@@ -52,7 +49,7 @@ public class Turret {
 	private final double ROTATE_Kp = 0.025, ROTATE_Ki = 0.0075, ROTATE_Kd = 0.0; // 0.065, 0.0075, 0.0175
 
 	public Turret() {
-		controller = Robot.controller;
+		driverstation = Robot.driverstation;
 
 		falconTalon = new TalonFX(PORTS.FALCON_TALON);
 		rotateSpark = new CANSparkMax(PORTS.ROTATE_SPARK, MotorType.kBrushless);
@@ -72,8 +69,6 @@ public class Turret {
 		falconPID = new PIDController(FALCON_Kp, FALCON_Ki, FALCON_Kd);
 
 		this.lime = Robot.lime;
-
-		df = new DecimalFormat("0.##");
 
 		// orchestra = new Orchestra();
 
@@ -103,16 +98,6 @@ public class Turret {
 	 */
 	private void shoot() {
 		setShooterSpeed();
-		// Stop the shooter and intake using the left bumper
-		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.L_BUMPER)) {
-			// Ramp shooter down
-			startSpeed = shooterSpeed;
-			targetSpeed = 0;
-			rampState = RampState.DOWN;
-			setRampPeriod();
-			System.out.println("Shooter Speed (ramp) -> 0%");
-			System.out.println("Intake Speed -> 0%");
-		}
 
 		double falconOutputSpeed = shooterSpeed;
 		if(usePID) {
@@ -129,6 +114,9 @@ public class Turret {
 		}
 		falconTalon.set(ControlMode.PercentOutput, -falconOutputSpeed);
 
+		SmartDashboard.putNumber("shooter speed", shooterSpeed);
+		SmartDashboard.putNumber("ramp target shooter speed", targetSpeed);
+
 		SmartDashboard.putNumber("shooter encoder rate", shaftEncoder.getRate());
 		SmartDashboard.putNumber("falcon current", falconTalon.getSupplyCurrent());
 		SmartDashboard.putNumber("rotate encoder", rotateEncoder.getPosition());
@@ -139,56 +127,67 @@ public class Turret {
 	}
 
 	private void setShooterSpeed() {
-		double speedIncrement = 0.05;
-		if(controller.getRawButton(BUTTONS.GAMEPAD.BACK_BUTTON)) // Fine adjustment
-			speedIncrement = 0.005;
-
-		// Change shooterSpeed using the x and y buttons
-		// Y button increases shooterSpeed in the shooting direction
-		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.Y_BUTTON) && shooterSpeed < maxSpeed) {
-			shooterSpeed += speedIncrement;
-			System.out.println("Shooter Speed -> " + df.format(shooterSpeed*100.0) + "%");
-		}
-		// X button decreases shooterSpeed towards the reverse direction
-		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.X_BUTTON) && shooterSpeed > 0) {
-			shooterSpeed -= speedIncrement;
-			System.out.println("Shooter Speed -> " + df.format(shooterSpeed*100.0) + "%");
-		}
-
-		// Adjust speed based on distance calculated by limelight
-		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.R_BUMPER) && useVision) {
+		// Speed -> 0
+		if(driverstation.getRawButtonPressed(BUTTONS.DRIVER_STATION.COL_BUTTON_1)) {
+			// Ramp shooter down
 			startSpeed = shooterSpeed;
-			targetSpeed = lime.getShooterSpeed();
+			targetSpeed = 0;
+			rampState = RAMP_STATE.DOWN;
+			setRampPeriod();
+			System.out.println("Shooter Speed (ramp) -> 0%");
+			System.out.println("Intake Speed -> 0%");
+		}
+
+		// Use manual control
+		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.LEFT_TOGGLE_BUTTON)) {
+			startSpeed = shooterSpeed;
+			// Add one and divide by two to convert from -1:1 to 0:1
+			targetSpeed = (driverstation.getRawAxis(BUTTONS.DRIVER_STATION.LEFT_SLIDER) + 1.0) / 2.0;
+			if(targetSpeed > maxSpeed) // Don't want to try to go too fast
+				targetSpeed = maxSpeed;
+			else if(Math.abs(targetSpeed) <= 0.1) // Deadband
+				targetSpeed = 0;
+			
+			if(shooterSpeed < targetSpeed)
+				rampState = RAMP_STATE.UP;
+			else
+				rampState = RAMP_STATE.DOWN;
+			setRampPeriod();
+		}
+		// Use auto control if limelight is enabled
+		// Or max speed if it's disabled (does this automatically since distance reads as 9.5m when there's no target)
+		else if(driverstation.getRawButtonPressed(BUTTONS.DRIVER_STATION.COL_BUTTON_2)) {
+			startSpeed = shooterSpeed;
+			targetSpeed = lime.getTargetShooterSpeed();
 			if(targetSpeed > maxSpeed) // Don't want to try to go too fast
 				targetSpeed = maxSpeed;
 			
 			if(shooterSpeed < targetSpeed)
-				rampState = RampState.UP;
+				rampState = RAMP_STATE.UP;
 			else
-				rampState = RampState.DOWN;
+				rampState = RAMP_STATE.DOWN;
 			setRampPeriod();
-			System.out.println("Shooter Speed (ramp) -> " + df.format(targetSpeed*100) + "%");
 		}
 
-
-		if(rampState == RampState.DOWN) {
+		// Ramp the speed
+		if(rampState == RAMP_STATE.DOWN) {
 			if(shooterSpeed > targetSpeed) // If we have started the ramp down
 				shooterSpeed += 0.02 * (targetSpeed - startSpeed) / rampPeriod; // 20 is because this iterates every 20 ms
 			else {
-				rampState = RampState.NO_RAMP;
+				rampState = RAMP_STATE.NO_RAMP;
 				targetSpeed = 0;
 				startSpeed = 0;
-				System.out.println("Target shooter speed achieved");
+				// System.out.println("Target shooter speed achieved");
 			}
 		}
-		else if(rampState == RampState.UP) {
+		else if(rampState == RAMP_STATE.UP) {
 			if(shooterSpeed < targetSpeed) // If we have started the ramp up
 				shooterSpeed += 0.02 * (targetSpeed - startSpeed) / rampPeriod; // 20 is because this iterates every 20 ms
 			else {
-				rampState = RampState.NO_RAMP;
+				rampState = RAMP_STATE.NO_RAMP;
 				targetSpeed = 0;
 				startSpeed = 0;
-				System.out.println("Target shooter speed achieved");
+				// System.out.println("Target shooter speed achieved");
 			}
 		}
 	}
@@ -198,12 +197,12 @@ public class Turret {
 	 * based on the desired change in speed
 	 */
 	private void setRampPeriod() {
-		// Make time to ramp 10x the change in speed
+		// Make time to ramp 5x the change in speed
 		// Ex: 0.1 (10%) -> 0.6 (60%) is a 0.5 (50%)
-		// change, so it will take 5.0 seconds to ramp up
-		double time = Math.abs(shooterSpeed - targetSpeed)*10.0;
+		// change, so it will take 2.5 seconds to ramp up
+		double time = Math.abs(shooterSpeed - targetSpeed)*5.0;
 		// Make ramp down slower than ramp up to protect motor
-		if(rampState == RampState.DOWN)
+		if(rampState == RAMP_STATE.DOWN)
 			time *= 1.5;
 
 		rampPeriod = time;
@@ -220,7 +219,7 @@ public class Turret {
 		// }
 
 		// If limit is clicked, zero the encoder
-		// If ONLY home limit is clicked - false when clicked
+		// If ONLY home limit is clicked
 		if(getHomeLimit()) {
 			rotateEncoder.setPosition(0);
 		}
@@ -233,20 +232,20 @@ public class Turret {
 			rotateEncoder.setPosition(TURRET_ANGLE_COUNTERCLOCKWISE_MAX);
         }
 
-		double leftTrigger = controller.getRawAxis(BUTTONS.GAMEPAD.LEFT_TRIGGER_AXIS);
-		double rightTrigger = controller.getRawAxis(BUTTONS.GAMEPAD.RIGHT_TRIGGER_AXIS);
+		boolean clockwise = driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_UP);
+		boolean counterclockwise = driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_DOWN);
 
 		double speed = 0;
-		double speedMultiplier = 0.20;
-		if(leftTrigger > 0) { // Counterclockwise
+		double turnRate = 0.1;
+		if(counterclockwise) { // Counterclockwise
 			// if(rotateEncoder.getPosition() < TURRET_ANGLE_COUNTERCLOCKWISE_MAX) {
 			if(!getRotateLimit(Direction.COUNTERCLOCKWISE)) {
-				speed = leftTrigger*leftTrigger*leftTrigger*speedMultiplier;
+				speed = turnRate;
 			}
 		}
-		else if(rightTrigger > 0) { //Clockwise
+		else if(clockwise) { //Clockwise
 			if(!getRotateLimit(Direction.CLOCKWISE)) { // If limit is not activated
-				speed = -rightTrigger*rightTrigger*rightTrigger*speedMultiplier;
+				speed = -turnRate;
 			}
 		}
 		else if(lime.isTracking() && useVision) {
@@ -270,7 +269,12 @@ public class Turret {
 				rotatePID.reset(); //resets accumulated integral error when within threshold
 			}
 		}
-		rotateSpark.set(speed);
+		double rotateSpeedMult = 1.0;
+		double rotateEncVal = rotateEncoder.getPosition();
+		if((rotateEncVal > 0 && Math.abs(TURRET_ANGLE_COUNTERCLOCKWISE_MAX - rotateEncVal) < 20) || 
+			(rotateEncVal < 0 && Math.abs(TURRET_ANGLE_CLOCKWISE_MAX - rotateEncVal) < 20))
+			rotateSpeedMult = 0.5;
+		rotateSpark.set(speed*rotateSpeedMult);
 	}
 
 	private void zeroTurret() {
@@ -281,13 +285,19 @@ public class Turret {
 			System.out.println("Turret Zeroed");
         }
         else if(getRotateLimit(Direction.COUNTERCLOCKWISE)) { // If max extension limit is clicked
+			rotateEncoder.setPosition(TURRET_ANGLE_COUNTERCLOCKWISE_MAX);
+            turretZeroed = true;
+			rotateSpark.set(0);
+			System.out.println("Turret Zeroed");
+        }
+        else if(getRotateLimit(Direction.CLOCKWISE)) { // If max extension limit is clicked
 			rotateEncoder.setPosition(TURRET_ANGLE_CLOCKWISE_MAX);
             turretZeroed = true;
 			rotateSpark.set(0);
 			System.out.println("Turret Zeroed");
         }
         else {
-			rotateSpark.set(0.1); // Slowly rotate clockwise ... until limit is hit
+			rotateSpark.set(-0.1); // Slowly rotate counterclockwise ... until limit is hit
 		}
 	}
 

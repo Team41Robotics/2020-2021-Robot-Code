@@ -7,7 +7,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 class Limelight {
-	private Joystick controller;
+	private Joystick driverstation;
 
 	private NetworkTable limelight;
 	private NetworkTableEntry tx, ty, ledMode, pipeline;
@@ -23,7 +23,7 @@ class Limelight {
 	h2 = 2.30505; // Height to center of vision target (quarter of the height of the hexagon) (in meters)
 
 	public Limelight() {
-		controller = Robot.controller;
+		driverstation = Robot.driverstation;
 		limelight = NetworkTableInstance.getDefault().getTable("limelight");
 		tx = limelight.getEntry("tx");
 		ty = limelight.getEntry("ty");
@@ -39,7 +39,7 @@ class Limelight {
 			limelightInit();
 
 		SmartDashboard.putNumber("Distance to Target", getDistance());
-		SmartDashboard.putNumber("Limelight Target Shooter Speed", getShooterSpeed());
+		SmartDashboard.putNumber("Limelight Target Shooter Speed", getTargetShooterSpeed());
 		updatePipeline();
 		toggleTracking();
 	}
@@ -58,7 +58,7 @@ class Limelight {
 	 * Calculates the optimal shooter speed based on the distance calculated in <code>getDistance()</code>
 	 * @return The output speed of the motor controller from 0 to 1
 	 */
-	public double getShooterSpeed() {
+	public double getTargetShooterSpeed() {
 		// Quartic Relationship of distance to speed
 		double a = 0.00741,
 			b = -0.221,
@@ -93,32 +93,37 @@ class Limelight {
 
 	/**
 	 * Changes the Limelight zoom when the D-Pad is pressed
-	 * @param controller
 	 */
 	private void updatePipeline() {
-		if(controller.getPOV() == 270) { // Left on the D-Pad sets zoom to 1x
+		if(driverstation.getPOV() == 315) {
 			pipeline.setNumber(0);
-			System.out.println("Zoom -> 1x");
+			// System.out.println("Zoom -> 1x");
 		}
-		if(controller.getPOV() == 90) { // Right on the D-Pad sets zoom to 2x
+		else if(driverstation.getPOV() == 0) {
 			pipeline.setNumber(1);
-			System.out.println("Zoom -> 2x");
+			// System.out.println("Zoom -> 2x");
 		}
-		if(controller.getPOV() == 180) { // Down on the D-Pad sets zoom to 3x
+		else if(driverstation.getPOV() == 45) {
 			pipeline.setNumber(2);
-			System.out.println("Zoom -> 3x");
+			// System.out.println("Zoom -> 3x");
 		}
 	}
 
 	/**
 	 * Turns the Limelight lights on or off
-	 * @param controller
 	 */
 	private void toggleTracking() {
-		if(controller.getRawButtonPressed(BUTTONS.GAMEPAD.START_BUTTON)) {
-			ledMode.setNumber(isTracking ? 1 : 3);
-			isTracking = !isTracking;
-			System.out.println("Tracking -> " + (isTracking ? "On" : "Off"));
+		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_M)) {
+			if(!isTracking) { // So we don't repeatedly set the mode to on
+				ledMode.setNumber(3);
+				isTracking = true;
+			}
+		}
+		else {
+			if(isTracking) { // So we don't repeatedly set the mode to off
+				ledMode.setNumber(1);
+				isTracking = false;
+			}
 		}
 	}
 
