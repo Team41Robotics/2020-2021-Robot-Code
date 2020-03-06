@@ -18,8 +18,8 @@ class Limelight {
 	private final boolean useHood;
 	private boolean hoodDown = true;
 
-	private final double a1 = Math.toRadians(9.5), // Angle of camera relative to the ground
-	h1 = 0.705, // Height from geound to center of limelight (in meters)
+	private final double a1 = Math.toRadians(17), // Angle of camera relative to the ground
+	h1 = 0.7, // Height from geound to center of limelight (in meters)
 	h2 = 2.30505; // Height to center of vision target (quarter of the height of the hexagon) (in meters)
 
 	public Limelight() {
@@ -95,18 +95,11 @@ class Limelight {
 	 * Changes the Limelight zoom when the D-Pad is pressed
 	 */
 	private void updatePipeline() {
-		if(driverstation.getPOV() == 315) {
-			pipeline.setNumber(0);
-			// System.out.println("Zoom -> 1x");
-		}
-		else if(driverstation.getPOV() == 0) {
-			pipeline.setNumber(1);
-			// System.out.println("Zoom -> 2x");
-		}
-		else if(driverstation.getPOV() == 45) {
-			pipeline.setNumber(2);
-			// System.out.println("Zoom -> 3x");
-		}
+		int pov = driverstation.getPOV(0)/45;
+		if(pov == -1 || pov == 3 || pov == 7)
+			return;
+		int lime = pov & 0b11;
+		pipeline.setNumber(lime);
 	}
 
 	/**

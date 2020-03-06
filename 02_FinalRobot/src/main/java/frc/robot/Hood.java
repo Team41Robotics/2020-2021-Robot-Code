@@ -8,7 +8,7 @@ class Hood {
 	private Joystick driverstation;
 	private Servo hoodServo;
 
-	private final double maxAngle = 110;
+	private final double maxAngle = 120;
 	private final double minAngle = 0;
 	private double hoodAngle;
 	private boolean hoodDown;

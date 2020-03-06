@@ -34,7 +34,7 @@ public class Turret {
 	private double targetSpeed = 0;
 	private double startSpeed = 0;
 
-	private boolean turretZeroed = false;	
+	private boolean turretZeroed = false;
 	
 	private final double maxSpeed = 0.975; // From 0 to 1
 	private final boolean feedForward = true;

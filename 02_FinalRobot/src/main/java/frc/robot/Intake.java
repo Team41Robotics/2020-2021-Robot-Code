@@ -26,8 +26,9 @@ class Intake {
 	private double shooterIntakeSpeed = 0, elevatorSpeedTop = 0, elevatorSpeedBottom = 0, intakeArmSpeed = 0;
 	private boolean intakeArmForward;
 
-	private Timer resetTimer;
-	private Timer bottomLimTimer, middleLimTimer;
+	private Timer bottomLimTimer, middleLimTimer, topLimTimer;
+	private enum RESET_STATE {NO_RESET, START, WAIT, END};
+	private RESET_STATE resetState = RESET_STATE.NO_RESET;
 	private enum INTAKE_STATE {ZERO, PRE_ONE, ONE, TWO_UP, TWO_FALL, TWO_DOWN, THREE};
 	private INTAKE_STATE intakeState = INTAKE_STATE.ZERO;
 
@@ -50,9 +51,9 @@ class Intake {
 		elevatorLimitMiddle = new DigitalInput(PORTS.ELEVATOR_LIMIT_MIDDLE);
 		elevatorLimitBottom = new DigitalInput(PORTS.ELEVATOR_LIMIT_BOTTOM);
 
-		resetTimer = new Timer();
 		bottomLimTimer = new Timer();
 		middleLimTimer = new Timer();
+		topLimTimer = new Timer();
 
 		intakeInit();
 	}
@@ -69,12 +70,23 @@ class Intake {
 		maxElevatorSpeedTop = SmartDashboard.getNumber("max elevator speed top", maxElevatorSpeedTop);
 		maxElevatorSpeedBottom = SmartDashboard.getNumber("max elevator speed bottom", maxElevatorSpeedBottom);
 		
-		// boolean autoMode = SmartDashboard.getBoolean("autoMode", false);
-		boolean autoMode = driverstation.getRawAxis(BUTTONS.DRIVER_STATION.LEFT_DIAL) > 0;
-		if (autoMode) autoMode = autoIntake();
+		int pov = driverstation.getPOV(0);
+		if(pov != -1) pov /= 45; // Convert from 0-315 to 0-7
+		boolean autoMode = (pov & 0b100) == 0b100;
+		// Don't use auto mode if we will be climbing
+		if(pov == -1 || pov == 3 || pov == 7)
+			autoMode = false;
+		// If we're not using auto mode, reset the state
 		if(!autoMode) {
+			resetState = RESET_STATE.NO_RESET;
+			intakeState = INTAKE_STATE.ZERO;
+		}
+
+		if (autoMode) autoMode = autoIntake();
+		if(!autoMode) { // If we're not using auto mode or we're in stage three
 			setIndexerSpeed();
 		}
+		setShooterIntakeSpeed();
 		setIntakeArmSpeed();
 		toggleIntakeArm();
 
@@ -95,49 +107,60 @@ class Intake {
 		boolean limTop = elevatorLimitTop.get();
 		boolean limMid = elevatorLimitMiddle.get();
 		boolean limBot = elevatorLimitBottom.get();
-		/* if((intakeState != INTAKE_STATE.ONE) && !limTop && !limMid && !limBot) {
-			// If we don't have any balls, start timer to reset ballCount
-			// Don't do this if ball count is one since no balls will be hitting limits when that is the case
-			if(resetTimer.get() == 0)
-				resetTimer.start();
-			else if(resetTimer.get() > 0.5) { // If we go half a second with no activations, we're sure we have no balls
-				intakeState = INTAKE_STATE.ZERO;
-				resetTimer.stop();
-				resetTimer.reset();
-			}
-		}
-		else if(resetTimer.get() != 0) { // If a limit got activated, reset the timer
-			resetTimer.stop();
-			resetTimer.reset();
-		} */
+		
+		switch(resetState) {
+			case NO_RESET:
+				// If we're not in state zero but are running all the motors
+				// then reset, because that means we were shooting
+				if(intakeState != INTAKE_STATE.ZERO && shooterIntakeSpeed != 0 && elevatorSpeedTop != 0 && elevatorSpeedBottom != 0)
+					resetState = RESET_STATE.START;
+				break;
+			case START:
+				topLimTimer.start();
+				resetState = RESET_STATE.WAIT;
+				break;
+			case WAIT:
+				if(limTop) {
+					topLimTimer.stop();
+					topLimTimer.reset();
 
-		double speedTop = 0, speedBottom = 0;
+					resetState = RESET_STATE.START;
+				}
+				else if(topLimTimer.get() > 1)
+					resetState = RESET_STATE.END;
+				break;
+			case END:
+				intakeState = INTAKE_STATE.ZERO;
+				resetState = RESET_STATE.NO_RESET;
+				break;
+		}
+
 		switch(intakeState) {
 			case ZERO: // No balls yet
 				// Run elevator until limit is pressed and unpressed, then stop top elevator
-				speedTop = maxElevatorSpeedTop;
-				speedBottom = maxElevatorSpeedBottom;
+				elevatorSpeedTop = maxElevatorSpeedTop;
+				elevatorSpeedBottom = maxElevatorSpeedBottom;
+				// if(limTop && limMid) // If both are activated, we have two balls, so move past PRE_ONE to avoid squishing
+				// 	intakeState = INTAKE_STATE.ONE;
 				if(limTop)
 					intakeState = INTAKE_STATE.PRE_ONE;
-				
 				break;
 			case PRE_ONE:
 				// Make it go slower if the limit has been clicked so we don't overshoot
-				speedTop = 0.5 * maxElevatorSpeedTop;
-				speedBottom = maxElevatorSpeedBottom;
+				elevatorSpeedTop = 0.5 * maxElevatorSpeedTop;
+				elevatorSpeedBottom = maxElevatorSpeedBottom;
 				if(!limTop) {
-					speedTop = 0;
+					elevatorSpeedTop = 0;
 					intakeState = INTAKE_STATE.ONE;
 				}
-				
 				break;
 			case ONE:
 				// Run bottom elevator up and down as long as only middle OR bottom limit is activated
-				speedTop = 0;
-				speedBottom = maxElevatorSpeedBottom;
+				elevatorSpeedTop = 0;
+				elevatorSpeedBottom = maxElevatorSpeedBottom;
 
 				if(limMid && limBot) { // If we have three balls, both limits are pressed
-					speedBottom = 0;
+					elevatorSpeedBottom = 0;
 					intakeState = INTAKE_STATE.THREE;
 				}
 				else if(limMid) { // If we hit the top, go down
@@ -147,10 +170,10 @@ class Intake {
 				}
 				break;
 			case TWO_UP:
-				speedTop = 0;
-				speedBottom = maxElevatorSpeedBottom;
+				elevatorSpeedTop = 0;
+				elevatorSpeedBottom = maxElevatorSpeedBottom;
 				if(limMid && limBot) { // If we have three balls, both limits are pressed
-					speedBottom = 0;
+					elevatorSpeedBottom = 0;
 					middleLimTimer.stop();
 					middleLimTimer.reset();
 					intakeState = INTAKE_STATE.THREE;
@@ -162,8 +185,8 @@ class Intake {
 				}
 				break;
 			case TWO_FALL: // Make the second ball go down
-				speedTop = 0;
-				speedBottom = -maxElevatorSpeedBottom;
+				elevatorSpeedTop = 0;
+				elevatorSpeedBottom = -maxElevatorSpeedBottom;
 				if(limBot) {
 					intakeState = INTAKE_STATE.TWO_DOWN;
 					bottomLimTimer.reset();
@@ -171,8 +194,8 @@ class Intake {
 				}
 				break;
 			case TWO_DOWN: // Stop the second ball at the bottom for a second
-				speedTop = 0;
-				speedBottom = 0;
+				elevatorSpeedTop = 0;
+				elevatorSpeedBottom = 0;
 				if(bottomLimTimer.get() > 1) {
 					bottomLimTimer.stop();
 					bottomLimTimer.reset();
@@ -180,14 +203,14 @@ class Intake {
 				}
 				break;
 			case THREE:
-				speedTop = 0;
-				speedBottom = 0;
-				elevatorSparkTop.set(speedTop);
-				elevatorSparkBottom.set(speedBottom);
+				elevatorSpeedTop = 0;
+				elevatorSpeedBottom = 0;
+				elevatorSparkTop.set(elevatorSpeedTop);
+				elevatorSparkBottom.set(elevatorSpeedBottom);
 				return false;
 		}
-		elevatorSparkTop.set(speedTop);
-		elevatorSparkBottom.set(speedBottom);
+		elevatorSparkTop.set(elevatorSpeedTop);
+		elevatorSparkBottom.set(elevatorSpeedBottom);
 		return true;
 	}
 
@@ -202,19 +225,6 @@ class Intake {
 			System.out.println("Elevator Speed Top -> 0%");
 			System.out.println("Elevator Speed Bottom -> 0%");
 		}
-		
-		// Shooter Intake
-		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_L)) {
-			if(shooterIntakeSpeed == 0) // Only print the first time it's changed
-				System.out.println("Shooter Intake Speed -> 80%");
-			shooterIntakeSpeed = maxShooterIntakeSpeed;
-		}
-		else {
-			if(shooterIntakeSpeed != 0) // Only print the first time it's changed
-				System.out.println("Shooter Intake Speed -> 0%");
-			shooterIntakeSpeed = 0;
-		}
-		shooterIntakeTalon.set(ControlMode.PercentOutput, -shooterIntakeSpeed);
 		
 		// Elevator Top
 		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_M_UP)) {
@@ -251,6 +261,20 @@ class Intake {
 			elevatorSpeedBottom = 0;
 		}
 		elevatorSparkBottom.set(elevatorSpeedBottom);
+	}
+	private void setShooterIntakeSpeed() {
+		// Shooter Intake
+		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_L)) {
+			if(shooterIntakeSpeed == 0) // Only print the first time it's changed
+				System.out.println("Shooter Intake Speed -> 80%");
+			shooterIntakeSpeed = maxShooterIntakeSpeed;
+		}
+		else {
+			if(shooterIntakeSpeed != 0) // Only print the first time it's changed
+				System.out.println("Shooter Intake Speed -> 0%");
+			shooterIntakeSpeed = 0;
+		}
+		shooterIntakeTalon.set(ControlMode.PercentOutput, -shooterIntakeSpeed);
 	}
 	private void setIntakeArmSpeed() {
 		if(rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_TRIGGER)) {
