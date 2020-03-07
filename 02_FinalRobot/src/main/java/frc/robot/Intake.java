@@ -72,9 +72,9 @@ class Intake {
 		
 		int pov = driverstation.getPOV(0);
 		if(pov != -1) pov /= 45; // Convert from 0-315 to 0-7
-		boolean autoMode = (pov & 0b100) == 0b100;
+		boolean autoMode = (pov & 0b010) == 0b010; // If the second bit is active, use auto
 		// Don't use auto mode if we will be climbing
-		if(pov == -1 || pov == 3 || pov == 7)
+		if(pov == -1)
 			autoMode = false;
 		// If we're not using auto mode, reset the state
 		if(!autoMode) {

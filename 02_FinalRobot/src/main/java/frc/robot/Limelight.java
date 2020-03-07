@@ -96,9 +96,7 @@ class Limelight {
 	 */
 	private void updatePipeline() {
 		int pov = driverstation.getPOV(0)/45;
-		if(pov == -1 || pov == 3 || pov == 7)
-			return;
-		int lime = pov & 0b11;
+		int lime = pov & 0b001;
 		pipeline.setNumber(lime);
 	}
 

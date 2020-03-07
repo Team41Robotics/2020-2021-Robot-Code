@@ -39,7 +39,7 @@ public class Turret {
 	private final double maxSpeed = 0.975; // From 0 to 1
 	private final boolean feedForward = true;
 	private final boolean usePID = true;
-	private final boolean useVision = true;
+	private final boolean autoRotate = true;
 	
 	// Constants
 	private final double MAX_FALCON_ENCODER_RATE = 6_500; // Found experimentally
@@ -248,7 +248,7 @@ public class Turret {
 				speed = -turnRate;
 			}
 		}
-		else if(lime.isTracking() && useVision) {
+		else if(lime.isTracking() && autoRotate) {
 			double tolerance = .5; // In degrees
 			double tx = lime.getTX();
 			if(tx > tolerance) {
