@@ -29,8 +29,11 @@ class Intake {
 	private Timer bottomLimTimer, middleLimTimer, topLimTimer;
 	private enum RESET_STATE {NO_RESET, START, WAIT, END};
 	private RESET_STATE resetState = RESET_STATE.NO_RESET;
-	private enum INTAKE_STATE {ZERO, PRE_ONE, ONE, TWO_UP, TWO_FALL, TWO_DOWN, THREE};
+	private enum INTAKE_STATE {ZERO, PRE_ONE, ONE, TWO_UP, TWO_FALL, TWO_DOWN, MANUAL};
 	private INTAKE_STATE intakeState = INTAKE_STATE.ZERO;
+
+	public enum AUTON_STATE {INIT, LOAD_BALLS, SHOOT};
+	private AUTON_STATE autonState = AUTON_STATE.INIT;
 
 	private double maxShooterIntakeSpeed = 0.8;
 	private double maxElevatorSpeedTop = 0.5;
@@ -62,33 +65,41 @@ class Intake {
 		shooterIntakeTalon.configFactoryDefault();
 		shooterIntakeTalon.setNeutralMode(NeutralMode.Brake);
 
-		intakeArmForward = true;
-		intakeArmSol.set(Value.kForward);
+		intakeArmForward = false;
+		intakeArmSol.set(Value.kReverse);
 	}
 
-	public void controllerMove() {
-		maxElevatorSpeedTop = SmartDashboard.getNumber("max elevator speed top", maxElevatorSpeedTop);
-		maxElevatorSpeedBottom = SmartDashboard.getNumber("max elevator speed bottom", maxElevatorSpeedBottom);
-		
-		int pov = driverstation.getPOV(0);
-		if(pov != -1) pov /= 45; // Convert from 0-315 to 0-7
-		boolean autoMode = (pov & 0b010) == 0b010; // If the second bit is active, use auto
-		// Don't use auto mode if we will be climbing
-		if(pov == -1)
-			autoMode = false;
-		// If we're not using auto mode, reset the state
-		if(!autoMode) {
-			resetState = RESET_STATE.NO_RESET;
-			intakeState = INTAKE_STATE.ZERO;
+	public void periodic() {
+		if(Robot.inAuton) {
+			auton();
+		}
+		else {
+			int pov = driverstation.getPOV(0);
+			if(pov != -1) pov /= 45; // Convert from 0-315 to 0-7
+			boolean autoMode = (pov & 0b010) == 0b010; // If the second bit is active, use auto
+			// Don't use auto mode if we will be climbing
+			if(pov == -1)
+				autoMode = false;
+			// If we're not using auto mode, reset the state
+			if(!autoMode) {
+				resetState = RESET_STATE.NO_RESET;
+				intakeState = INTAKE_STATE.ZERO;
+			}
+
+			if (autoMode) autoMode = autoIntake();
+			if(!autoMode) { // If we're not using auto mode or we're in the manual stage
+				setIndexerSpeed();
+			}
+			resetAutoIntake();
+			setShooterIntakeSpeed();
+			setIntakeArmSpeed();
+			toggleIntakeArm();
+
+			SmartDashboard.putBoolean("autoMode", autoMode);
 		}
 
-		if (autoMode) autoMode = autoIntake();
-		if(!autoMode) { // If we're not using auto mode or we're in stage three
-			setIndexerSpeed();
-		}
-		setShooterIntakeSpeed();
-		setIntakeArmSpeed();
-		toggleIntakeArm();
+		maxElevatorSpeedTop = SmartDashboard.getNumber("max elevator speed top", maxElevatorSpeedTop);
+		maxElevatorSpeedBottom = SmartDashboard.getNumber("max elevator speed bottom", maxElevatorSpeedBottom);
 
 		SmartDashboard.putNumber("shooter intake speed", shooterIntakeSpeed);
 		SmartDashboard.putNumber("elevator speed top", elevatorSpeedTop);
@@ -100,40 +111,45 @@ class Intake {
 		SmartDashboard.putBoolean("elevator limit bottom", elevatorLimitBottom.get());
 
 		SmartDashboard.putString("intake state", intakeState.toString());
-		SmartDashboard.putBoolean("autoMode", autoMode);
+		SmartDashboard.putString("intake auton state", autonState.toString());
+	}
+
+	private void auton() {
+		switch(autonState) {
+			case INIT:
+				// Put the intake into manual control since we will start with three balls
+				intakeState = INTAKE_STATE.MANUAL;
+				autonState = AUTON_STATE.LOAD_BALLS;
+				break;
+			case LOAD_BALLS:
+				autoIntake();
+				break;
+			case SHOOT:
+				// If turret is up to speed, then shoot
+				shooterIntakeSpeed = maxShooterIntakeSpeed;
+				elevatorSpeedTop = maxElevatorSpeedTop;
+				elevatorSpeedBottom = maxElevatorSpeedBottom;
+
+				shooterIntakeTalon.set(ControlMode.PercentOutput, -maxShooterIntakeSpeed);
+				elevatorSparkTop.set(elevatorSpeedTop);
+				elevatorSparkBottom.set(elevatorSpeedBottom);
+
+				// resetAutoIntake();
+				// If we shot balls and the intake reset itslef
+				/* if(intakeState == INTAKE_STATE.ZERO) {		
+					autonState = AUTON_STATE.LOAD_BALLS;
+					shooterIntakeTalon.set(ControlMode.PercentOutput, 0);
+					elevatorSparkTop.set(0);
+					elevatorSparkBottom.set(0);
+				} */
+				break;
+		}
 	}
 
 	private boolean autoIntake() {
 		boolean limTop = elevatorLimitTop.get();
 		boolean limMid = elevatorLimitMiddle.get();
 		boolean limBot = elevatorLimitBottom.get();
-		
-		switch(resetState) {
-			case NO_RESET:
-				// If we're not in state zero but are running all the motors
-				// then reset, because that means we were shooting
-				if(intakeState != INTAKE_STATE.ZERO && shooterIntakeSpeed != 0 && elevatorSpeedTop != 0 && elevatorSpeedBottom != 0)
-					resetState = RESET_STATE.START;
-				break;
-			case START:
-				topLimTimer.start();
-				resetState = RESET_STATE.WAIT;
-				break;
-			case WAIT:
-				if(limTop) {
-					topLimTimer.stop();
-					topLimTimer.reset();
-
-					resetState = RESET_STATE.START;
-				}
-				else if(topLimTimer.get() > 1)
-					resetState = RESET_STATE.END;
-				break;
-			case END:
-				intakeState = INTAKE_STATE.ZERO;
-				resetState = RESET_STATE.NO_RESET;
-				break;
-		}
 
 		switch(intakeState) {
 			case ZERO: // No balls yet
@@ -161,7 +177,7 @@ class Intake {
 
 				if(limMid && limBot) { // If we have three balls, both limits are pressed
 					elevatorSpeedBottom = 0;
-					intakeState = INTAKE_STATE.THREE;
+					intakeState = INTAKE_STATE.MANUAL;
 				}
 				else if(limMid) { // If we hit the top, go down
 					intakeState = INTAKE_STATE.TWO_UP;
@@ -176,9 +192,9 @@ class Intake {
 					elevatorSpeedBottom = 0;
 					middleLimTimer.stop();
 					middleLimTimer.reset();
-					intakeState = INTAKE_STATE.THREE;
+					intakeState = INTAKE_STATE.MANUAL;
 				}
-				else if(middleLimTimer.get() > 0.5) {
+				else if(middleLimTimer.get() > 0.4) {
 					intakeState = INTAKE_STATE.TWO_FALL;
 					middleLimTimer.stop();
 					middleLimTimer.reset();
@@ -202,7 +218,7 @@ class Intake {
 					intakeState = INTAKE_STATE.ONE;
 				}
 				break;
-			case THREE:
+			case MANUAL:
 				elevatorSpeedTop = 0;
 				elevatorSpeedBottom = 0;
 				elevatorSparkTop.set(elevatorSpeedTop);
@@ -212,6 +228,37 @@ class Intake {
 		elevatorSparkTop.set(elevatorSpeedTop);
 		elevatorSparkBottom.set(elevatorSpeedBottom);
 		return true;
+	}
+
+	private void resetAutoIntake() {
+		boolean limTop = elevatorLimitTop.get();
+
+		switch(resetState) {
+			case NO_RESET:
+				// If we're not in state zero but are running all the motors
+				// then reset, because that means we were shooting
+				if(intakeState != INTAKE_STATE.ZERO && shooterIntakeSpeed != 0 && elevatorSpeedTop != 0 && elevatorSpeedBottom != 0)
+					resetState = RESET_STATE.START;
+				break;
+			case START:
+				topLimTimer.start();
+				resetState = RESET_STATE.WAIT;
+				break;
+			case WAIT:
+				if(limTop) {
+					topLimTimer.stop();
+					topLimTimer.reset();
+
+					resetState = RESET_STATE.START;
+				}
+				else if(topLimTimer.get() > 3) // If we go three seconds without shooting, reset
+					resetState = RESET_STATE.END;
+				break;
+			case END:
+				intakeState = INTAKE_STATE.ZERO;
+				resetState = RESET_STATE.NO_RESET;
+				break;
+		}
 	}
 
 	private void setIndexerSpeed() {
@@ -292,9 +339,17 @@ class Intake {
 	
 	private void toggleIntakeArm() {
 		if(leftJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.L_JOY_TRIGGER)) {
-			intakeArmSol.set(intakeArmForward ? Value.kReverse : Value.kForward);
-			intakeArmForward = !intakeArmForward;
-			System.out.println("Intake Arm -> " + (intakeArmForward ? "Forward" : "Reverse"));
+			setIntakeArmPos(!intakeArmForward);
 		}
+	}
+
+	public void setIntakeArmPos(boolean forward) {
+		intakeArmSol.set(forward ? Value.kForward : Value.kReverse);
+		intakeArmForward = forward;
+		System.out.println("Intake Arm -> " + (intakeArmForward ? "Forward" : "Reverse"));
+	}
+
+	public void setAutonState(AUTON_STATE state) {
+		autonState = state;
 	}
 }

@@ -18,20 +18,23 @@ class Hood {
 	public Hood() {
 		driverstation = Robot.driverstation;
 		hoodServo = new Servo(PORTS.HOOD_SERVO);
-		hoodServo.setAngle(minAngle);
-		hoodAngle = minAngle;
-		hoodDown = true;
+		hoodDown = false;
+		hoodAngle = hoodDown ? minAngle : maxAngle;
+		hoodServo.setAngle(hoodAngle);
 
 		this.lime = Robot.lime;
+		lime.setHoodDown(hoodDown);
 	}
 
-	public void controllerMove() {
-		maxHoodPos();
+	public void periodic() {
+		if(!Robot.inAuton) {
+			setHoodPos();
+		}
 
 		SmartDashboard.putBoolean("Hood Down", hoodDown);
 	}
 
-	private void maxHoodPos() {
+	private void setHoodPos() {
 		double distance = lime.getDistance();
 
 		boolean toggle = false;

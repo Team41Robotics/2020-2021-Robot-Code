@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 class Climbing {
 	private final MotorType kBrushless = MotorType.kBrushless;
@@ -23,7 +24,7 @@ class Climbing {
 	private enum CLIMB_STATE {NONE, START_UP, START_UP_TRANS_CLAMP_DOWN, CLAMP_DOWN, CLAMP_DOWN_TRANS_PISTON, PISTON_FORWARD, PISTON_WAIT, PISTON_REVERSE, PISTON_TRANS_FORK_UP, FORK_UP, FORK_UP_TRANS_FINAL_UP, FINAL_UP};
 	private CLIMB_STATE climbState = CLIMB_STATE.NONE;
 
-	private final double CLIMB_POS_START_UP = 0000,
+	private final double CLIMB_POS_START_UP = 220.0,
 						CLIMB_POS_CLAMP_DOWN = 0000,
 						CLIMB_POS_FORK_DROP = 0000,
 						CLIMB_POS_FINAL = 0000;
@@ -34,27 +35,36 @@ class Climbing {
 		spark1 = new CANSparkMax(PORTS.CLIMB_SPARK_1, kBrushless);
 		spark2 = new CANSparkMax(PORTS.CLIMB_SPARK_2, kBrushless);
 		climbEnc = spark1.getEncoder();
-		piston = new DoubleSolenoid(PORTS.CLIMB_SOL_FORWARD, PORTS.CLIMB_SOL_REVERSE);
+		piston = new DoubleSolenoid(PORTS.PCM, PORTS.CLIMB_SOL_FORWARD, PORTS.CLIMB_SOL_REVERSE);
 	}
 
-	public void controllerMove() {
-		double speed = 0;
+	public void periodic() {
 		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.RIGHT_TOGGLE_BUTTON)) {
-			if(rightJoy.getPOV() == 0)
-				speed = -0.75;
-			if(rightJoy.getPOV() == 180)
-				speed = 0.75;
-			
-			if(driverstation.getRawButtonPressed(BUTTONS.DRIVER_STATION.COL_BUTTON_3)) {
-				piston.set(piston.get() == Value.kForward ? Value.kReverse : Value.kForward);
+			// Play music while climbing
+			if(!Robot.turret.orchestra.isPlaying()) Robot.turret.orchestra.play();
+
+			if(useAuto)
+				useAuto = autoClimb();
+			else {
+				double speed = 0;
+				double maxSpeed = (driverstation.getRawAxis(BUTTONS.DRIVER_STATION.RIGHT_DIAL) + 1.0) / 2.0;
+				if(rightJoy.getPOV() == 0)
+					speed = -maxSpeed;
+				if(rightJoy.getPOV() == 180)
+					speed = maxSpeed;
+				
+				if(driverstation.getRawButtonPressed(BUTTONS.DRIVER_STATION.COL_BUTTON_3)) {
+					piston.set(piston.get() == Value.kForward ? Value.kReverse : Value.kForward);
+				}
+				spark1.set(speed);
+				spark2.set(speed);
 			}
 		}
+		else {
+			Robot.turret.orchestra.stop();
+		}
 
-		spark1.set(speed);
-		spark2.set(speed);
-
-		if(useAuto)
-			useAuto = autoClimb();
+		SmartDashboard.putNumber("climb encoder pos", climbEnc.getPosition());
 	}
 
 	private boolean autoClimb() {
@@ -66,8 +76,10 @@ class Climbing {
 		switch(climbState) {
 			case NONE:
 				climbSpeed = 0;
-				if(pov == 3)
+				if(povToggle != currentPovToggle) {
 					climbState = CLIMB_STATE.START_UP;
+					currentPovToggle = povToggle;
+				}
 				break;
 			case START_UP:
 				climbSpeed = -0.5;

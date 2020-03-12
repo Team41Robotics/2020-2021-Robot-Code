@@ -18,8 +18,8 @@ class PORTS {
 	CLIMB_SPARK_2 = 9,
 	// DIO
 	// Everything that has a value of 1 has not been found yet
-	SHAFT_ENCODER_A = 0,
-	SHAFT_ENCODER_B = 1,
+	SHAFT_ENCODER_A = 2,
+	SHAFT_ENCODER_B = 3,
 	ROTATE_LIMIT_LEFT = 9,
 	ROTATE_LIMIT_CENTER = 6,
 	ROTATE_LIMIT_RIGHT = 8,

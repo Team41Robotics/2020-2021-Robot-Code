@@ -15,7 +15,7 @@ public class Driving {
 	private CANSparkMax sparkLF, sparkLB, sparkRF, sparkRB;
 	private CANEncoder leftEnc, rightEnc;
 
-	private double speedMultiplier = 1.0;
+	private double speedMultiplier = 0.7; // Starts robot at 50% speed for manual control
 	private double leftSpeed = 0;
 	private double rightSpeed = 0;
 	private PIDController leftPid, rightPid;
@@ -23,8 +23,12 @@ public class Driving {
 	private boolean usePid = true;
 
 	private final double MAX_DRIVE_SPEED = 5_500;
-	private final double L_Kp = 1.0, L_Ki = 0.05, L_Kd = 0.1;
-	private final double R_Kp = 1.0, R_Ki = 0.05, R_Kd = 0.1;
+	// Old - Too jerky
+	// private final double L_Kp = 1.0, L_Ki = 0.05, L_Kd = 0.1;
+	// private final double R_Kp = 1.0, R_Ki = 0.05, R_Kd = 0.1;
+	private final double L_Kp = 0.5, L_Ki = 0.025, L_Kd = 0.05;
+	private final double R_Kp = 0.5, R_Ki = 0.025, R_Kd = 0.05;
+
 
 	public Driving() {
 		driverstation = Robot.driverstation;
@@ -43,7 +47,7 @@ public class Driving {
 	}
 
 
-	public void controllerMove() {
+	public void periodic() {
 		double leftAxis = leftJoy.getRawAxis(BUTTONS.DRIVER_STATION.L_JOY_Y_AXIS);
 		double rightAxis = rightJoy.getRawAxis(BUTTONS.DRIVER_STATION.R_JOY_Y_AXIS);
 
@@ -54,23 +58,30 @@ public class Driving {
 		if(Math.abs(rightAxis) < deadband)
 			rightAxis = 0;
 
-		// Use speed multiplier to slow down driving. Default is 1.0
-		final double speedMultiplierIncrement = 0.1;
-		if(leftJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_RIGHT) && speedMultiplier >= speedMultiplierIncrement) {
-			speedMultiplier -= speedMultiplierIncrement;
-			System.out.println("Drivetrain Speed Multiplier -> " + speedMultiplier);
-		}
-		else if(rightJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_LEFT) && speedMultiplier <= 1 - speedMultiplierIncrement) {
-			speedMultiplier += speedMultiplierIncrement;
-			System.out.println("Drivetrain Speed Multiplier -> " + speedMultiplier);
-		}
-		leftAxis *= speedMultiplier;
-		rightAxis *= speedMultiplier;
 
-		// Emergency stop (just in case)
-		if(leftJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_LEFT)) {
-			leftSpeed = 0;
-			rightSpeed = 0;
+		// This slows down driving (useful for intaking balls since that requires slow speeds)
+		if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_RIGHT) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_LEFT)) {
+			leftAxis *= 0.45;
+			rightAxis *= 0.45;
+		}
+		// This speeds up driving
+		else if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_DOWN) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_DOWN)) {
+			leftAxis *= 1.0;
+			rightAxis *= 1.0;
+		}
+		else {
+			// Use speed multiplier to slow down driving. Default is 1.0
+			final double speedMultiplierIncrement = 0.1;
+			if(leftJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_LEFT) && speedMultiplier >= speedMultiplierIncrement) {
+				speedMultiplier -= speedMultiplierIncrement;
+				System.out.println("Drivetrain Speed Multiplier -> " + speedMultiplier);
+			}
+			else if(rightJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_RIGHT) && speedMultiplier <= 1 - speedMultiplierIncrement) {
+				speedMultiplier += speedMultiplierIncrement;
+				System.out.println("Drivetrain Speed Multiplier -> " + speedMultiplier);
+			}
+			leftAxis *= speedMultiplier;
+			rightAxis *= speedMultiplier;
 		}
 		
 		if(usePid) {
@@ -87,14 +98,10 @@ public class Driving {
 		}
 
 		// For safety
-		if(leftSpeed > 1)
-			leftSpeed = 1;
-		else if(leftSpeed < -1)
-			leftSpeed = -1;
-		if(rightSpeed > 1)
-			rightSpeed = 1;
-		else if(rightSpeed < -1)
-			rightSpeed = -1;
+		if(leftSpeed > 1) leftSpeed = 1;
+		else if(leftSpeed < -1) leftSpeed = -1;
+		if(rightSpeed > 1) rightSpeed = 1;
+		else if(rightSpeed < -1) rightSpeed = -1;
 		
 		drive();
 

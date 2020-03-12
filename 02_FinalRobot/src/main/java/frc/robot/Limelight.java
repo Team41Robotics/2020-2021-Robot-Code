@@ -13,14 +13,15 @@ class Limelight {
 	private NetworkTableEntry tx, ty, ledMode, pipeline;
 
 	private boolean isTracking;
-	private boolean firstRun;
 
 	private final boolean useHood;
 	private boolean hoodDown = true;
 
-	private final double a1 = Math.toRadians(17), // Angle of camera relative to the ground
+	private final double a1 = Math.toRadians(13.5), // Angle of camera relative to the ground
 	h1 = 0.7, // Height from geound to center of limelight (in meters)
 	h2 = 2.30505; // Height to center of vision target (quarter of the height of the hexagon) (in meters)
+
+	private final boolean flywheel = false;
 
 	public Limelight() {
 		driverstation = Robot.driverstation;
@@ -29,29 +30,27 @@ class Limelight {
 		ty = limelight.getEntry("ty");
 		ledMode = limelight.getEntry("ledMode");
 		pipeline = limelight.getEntry("pipeline");
-		firstRun = true;
 
 		this.useHood = Robot.useHood;
-	}
 
-	public void runLimelight() {
-		if(firstRun)
-			limelightInit();
-
-		SmartDashboard.putNumber("Distance to Target", getDistance());
-		SmartDashboard.putNumber("Limelight Target Shooter Speed", getTargetShooterSpeed());
-		updatePipeline();
-		toggleTracking();
-	}
-
-	/**
-	 * Initializes limelight LED configuration
-	 */
-	private void limelightInit() {
+		// Initialize LED configuration
 		ledMode.setNumber(1); // Set it to off
 		pipeline.setNumber(0); // Sets network tables pipeline to Standard (1x Zoom)
 		isTracking = false; // Since LED is off, we are not tracking
-		firstRun = false;
+	}
+
+	public void periodic() {
+		if(Robot.inAuton) {
+			ledMode.setNumber(3);
+			isTracking = true;
+		}
+		else {
+			updatePipeline();
+			updateTracking();
+		}
+
+		SmartDashboard.putNumber("Distance to Target", getDistance());
+		SmartDashboard.putNumber("Limelight Target Shooter Speed", getTargetShooterSpeed());
 	}
 
 	/**
@@ -59,22 +58,41 @@ class Limelight {
 	 * @return The output speed of the motor controller from 0 to 1
 	 */
 	public double getTargetShooterSpeed() {
-		// Quartic Relationship of distance to speed
-		double a = 0.00741,
-			b = -0.221,
-			c = 2.66,
-			d = -11.1,
-			e = 79.7,
-			x = getDistance();
-		double speed = a*x*x*x*x + b*x*x*x + c*x*x + d*x + e;
+		double speed = 0;
+		if(flywheel) {
+			// Quartic Relationship of distance to speed
+			double a = 0.00741,
+				b = -0.221,
+				c = 2.66,
+				d = -11.1,
+				e = 79.7,
+				x = getDistance();
+			speed = a*x*x*x*x + b*x*x*x + c*x*x + d*x + e;
 
-		// If we're using the hood and it is down, set the speed to the data
-		// that we obtained in the testing
-		if(useHood && hoodDown) {
-			a = 0.402;
-			b = -3.6;
-			c = 85.6;
+			// If we're using the hood and it is down, set the speed to the data
+			// that we obtained in the testing
+			if(useHood && hoodDown) {
+				a = 0.402;
+				b = -3.6;
+				c = 85.6;
+				speed = a*x*x + b*x + c;
+			}
+		}
+		else {
+			double a = 6.82,
+				b = -52.7,
+				c = 175,
+				x = getDistance();
 			speed = a*x*x + b*x + c;
+
+			// If we're using the hood and it is down, set the speed to the data
+			// that we obtained in the testing
+			if(useHood && hoodDown) {
+				a = -0.6;
+				b = 10.2;
+				c = 43.3;
+				speed = a*x*x + b*x + c;
+			}
 		}
 		return speed/100.0; // Convert from percent to decimal value from 0 to 1
 	}
@@ -103,7 +121,7 @@ class Limelight {
 	/**
 	 * Turns the Limelight lights on or off
 	 */
-	private void toggleTracking() {
+	private void updateTracking() {
 		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_M)) {
 			if(!isTracking) { // So we don't repeatedly set the mode to on
 				ledMode.setNumber(3);
