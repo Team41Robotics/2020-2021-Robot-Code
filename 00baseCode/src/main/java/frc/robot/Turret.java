@@ -144,6 +144,7 @@ public class Turret {
 			}
 		}
 		else {
+			//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION
 			// Speed -> 0
 			if(driverstation.getRawButtonPressed(BUTTONS.DRIVER_STATION.COL_BUTTON_1)) {
 				// Ramp shooter down
@@ -154,7 +155,7 @@ public class Turret {
 				System.out.println("Shooter Speed (ramp) -> 0%");
 				System.out.println("Intake Speed -> 0%");
 			}
-
+			//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION		
 			// Use manual control
 			if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.LEFT_TOGGLE_BUTTON)) {
 				startSpeed = shooterSpeed;
@@ -173,6 +174,7 @@ public class Turret {
 			}
 			// Use auto control if limelight is enabled
 			// Or max speed if it's disabled (does this automatically since distance reads as 9.5m when there's no target)
+			//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION	
 			else if(driverstation.getRawButtonPressed(BUTTONS.DRIVER_STATION.COL_BUTTON_2)) {
 				startSpeed = shooterSpeed;
 				targetSpeed = lime.getTargetShooterSpeed();
@@ -251,7 +253,7 @@ public class Turret {
         else if(getRotateLimit(Direction.COUNTERCLOCKWISE)) {
 			rotateEncoder.setPosition(TURRET_ANGLE_COUNTERCLOCKWISE_MAX);
         }
-
+		//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION	
 		boolean clockwise = driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_UP);
 		boolean counterclockwise = driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_DOWN);
 

@@ -48,7 +48,8 @@ public class Driving {
 
 
 	public void periodic() {
-		double leftAxis = leftJoy.getRawAxis(BUTTONS.DRIVER_STATION.L_JOY_Y_AXIS);
+		//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION
+		double leftAxis = leftJoy.getRawAxis(BUTTONS.DRIVER_STATION.L_JOY_Y_AXIS);  
 		double rightAxis = rightJoy.getRawAxis(BUTTONS.DRIVER_STATION.R_JOY_Y_AXIS);
 
 		// Set large deadband to stop robot from moving when it shouldn't be
@@ -58,12 +59,13 @@ public class Driving {
 		if(Math.abs(rightAxis) < deadband)
 			rightAxis = 0;
 
-
+		//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION
 		// This slows down driving (useful for intaking balls since that requires slow speeds)
 		if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_RIGHT) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_LEFT)) {
 			leftAxis *= 0.45;
 			rightAxis *= 0.45;
-		}
+		}	
+		//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION
 		// This speeds up driving
 		else if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_DOWN) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_DOWN)) {
 			leftAxis *= 1.0;
@@ -72,10 +74,12 @@ public class Driving {
 		else {
 			// Use speed multiplier to slow down driving. Default is 1.0
 			final double speedMultiplierIncrement = 0.1;
+			//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION
 			if(leftJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_LEFT) && speedMultiplier >= speedMultiplierIncrement) {
 				speedMultiplier -= speedMultiplierIncrement;
 				System.out.println("Drivetrain Speed Multiplier -> " + speedMultiplier);
 			}
+			//CHANGE TO SOMETHING THAT ISN'T DRIVERSTATION
 			else if(rightJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_RIGHT) && speedMultiplier <= 1 - speedMultiplierIncrement) {
 				speedMultiplier += speedMultiplierIncrement;
 				System.out.println("Drivetrain Speed Multiplier -> " + speedMultiplier);

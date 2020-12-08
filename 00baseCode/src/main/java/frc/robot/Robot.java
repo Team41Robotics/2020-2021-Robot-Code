@@ -75,8 +75,8 @@ public class Robot extends TimedRobot {
 		// comp.stop();
 
 		// Start driver camera
-		UsbCamera cam = CameraServer.getInstance().startAutomaticCapture();
-		cam.setVideoMode(PixelFormat.kMJPEG, 80, 60, 60);
+		//UsbCamera cam = CameraServer.getInstance().startAutomaticCapture();
+		//cam.setVideoMode(PixelFormat.kMJPEG, 80, 60, 60);
 	}
 
 	@Override
