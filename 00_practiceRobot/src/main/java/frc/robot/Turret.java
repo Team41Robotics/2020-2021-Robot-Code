@@ -25,7 +25,6 @@ public class Turret {
 	private double shooterSpeed = 0;
 	private PIDController falconPID, rotatePID;
 	private Limelight lime;
-	public Orchestra orchestra;
 
 	private enum Direction {CLOCKWISE, COUNTERCLOCKWISE};
 	public enum RAMP_STATE {NO_RAMP, UP, DOWN};
@@ -71,8 +70,6 @@ public class Turret {
 
 		this.lime = Robot.lime;
 
-		orchestra = new Orchestra();
-
 		turretInit();
 	}
 
@@ -82,9 +79,6 @@ public class Turret {
 
 		// Set Neutral Mode to Brake so Back-EMF doesn't break the robot
 		falconTalon.setNeutralMode(NeutralMode.Brake);
-
-		orchestra.addInstrument(falconTalon);
-		orchestra.loadMusic("song1.chrp");
 	}
 
 	public void periodic() {
