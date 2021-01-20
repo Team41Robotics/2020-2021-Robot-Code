@@ -39,7 +39,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Intake.AUTON_STATE;
 import frc.robot.Turret.RAMP_STATE;
 
-
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -139,6 +138,7 @@ public class Robot extends TimedRobot {
 	@Override
 	public void teleopPeriodic() {
 		inAuton = false;
+
 		if(!practiceRobot) {// defaults to command based movement using arcade drive if using practice robot
 			lime.periodic();
 			turret.periodic();
@@ -146,12 +146,13 @@ public class Robot extends TimedRobot {
 			intake.periodic();
 			drive.periodic();
 		}
-
+		
 		// System.out.println(m_robotContainer.m_robotDrive.getPose());
 	}
 
 	@Override
 	public void testInit() {
+
 	}
 
 	@Override
