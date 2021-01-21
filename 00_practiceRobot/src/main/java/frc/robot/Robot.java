@@ -147,7 +147,6 @@ public class Robot extends TimedRobot {
 			drive.periodic();
 		}
 		
-		// System.out.println(m_robotContainer.m_robotDrive.getPose());
 	}
 
 	@Override

@@ -31,8 +31,8 @@ public class Driving {
 
 
 	public Driving() {
-		leftJoy = Robot.leftJoy;
-		rightJoy = Robot.rightJoy;
+		leftJoy = new Joystick(3);
+		rightJoy = new Joystick(4);
 		sparkLF = new CANSparkMax(PORTS.SPARK_LF, kBrushless);
 		sparkLB = new CANSparkMax(PORTS.SPARK_LB, kBrushless);
 		sparkRF = new CANSparkMax(PORTS.SPARK_RF, kBrushless);
