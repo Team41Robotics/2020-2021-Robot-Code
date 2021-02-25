@@ -53,19 +53,20 @@ def velocity(path,curvatures):
         if c == 0:
             vel.append(0)
         else:
-            vel.append(math.min(VELOCITY_MAX, K_Vel/c))
+            vel.append(min(VELOCITY_MAX, K_Vel/c))
 
     # smooth velocities with max acceleration
-    vel(len(arr)-1) = 0
-    for i in reversed(xrange(len(vel)-1)):
+    vel[len(vel)-1] = 0
+    for i in reversed(range(len(vel)-1)):
         if i != 0:
             a = 1 # acceleration max
             x1 = path[i][0]
             x0 = path[i-1][0]
             y1 = path[i][1]
             y0 = path[i-1][1]
-            d = math.sqrt((x1-x0)**2 + (y1-by0)**2)) # distance between the points
-            vel(i) = math.min(vel(i), math.sqrt(vel(i-1)**2 + 2*a*d))
+            d = math.sqrt((x1-x0)**2 + (y1-y0)**2) # distance between the points
+            vel[i] = min(vel[i], math.sqrt(vel[i-1]**2 + 2*a*d))
+    return vel
 
 
 
@@ -79,9 +80,15 @@ for seg in segments:
     for i in range(0, num_points_that_fit):
         newPoints.append([seg[0][0]+(vector[0]*i), seg[0][1]+(vector[1]*i)])
 
-newPoints = smooth(newPoints, 0.0025, .001)
+newPoints = smooth(newPoints, 0.0016, .001)
+curves = curvature(newPoints)
+vels = velocity(newPoints, curves)
+newPoints = [[newPoints[i][0], newPoints[i][1], curves[i], vels[i]] for i in range(len(newPoints))]
+print(newPoints)
 
-img = plt.imread("img.png")
+axis = [0, 9.144, 0, 4.572]
+img = plt.imread("img.jpg")
 plt.plot([pt[0] for pt in newPoints], [pt[1] for pt in newPoints], "bo")
-plt.axis([0, 9.144, 0, 4.572])
+plt.axis(axis)
+plt.imshow(img, extent=axis)
 plt.show()
