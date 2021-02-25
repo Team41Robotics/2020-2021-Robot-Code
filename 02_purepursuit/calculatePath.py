@@ -7,13 +7,15 @@ SPACING = 0.1524
 newPoints = []
 segments = [[pts[i-1], pts[i]] for i in range(1, len(pts))]
 
+# Use complicated math to smooth the path we made
 def smooth(path, b, tolerance):
     a = 1.0-b
     smoothPath = path.copy()
 
     change = tolerance
     while change >= tolerance:
-        change = 0.0
+        change = 0.0   
+        # Double for loop to go through 
         for i in range(1, len(path)- 1):
             for j in range(0, len(path[i])):
                 aux = smoothPath[i][j]
@@ -22,6 +24,8 @@ def smooth(path, b, tolerance):
 
     return smoothPath
 
+
+# Find the curvature in each pint in the path
 def curvature(path):
     ret = []
     ret.append(0)
@@ -34,15 +38,19 @@ def curvature(path):
         y2 = path[i][1]
         y3 = path[i+1][1]
 
+        # Complicated math
         k1 = 0.5 * (x1**2 + y1**2 - x2**2 - y2**2) / (x1-x2)
         k2 = (y1-y2)/(x1-x2)
         b = 0.5 * (x2**2-(2*x2*k1) + y2**2-x3**2+(2*x3*k1)-y3**2) / ((x3*k2)-y3+y2-(x2*k2))
         a = k1-k2*b
         r = math.sqrt((x1-a)**2 + (y1-b)**2)
+        # Curvature v
         ret.append(1/r)
 
+    # Make the list the proper length
     ret.append(0)
     return ret
+
 
 VELOCITY_MAX = 5
 K_Vel = 1 # Apparently should be set between 1-5
@@ -70,7 +78,7 @@ def velocity(path,curvatures):
 
 
 
-
+# Inject more points into the new path
 for seg in segments:
     vector = [(seg[1][0] - seg[0][0]), (seg[1][1] - seg[0][1])]
     magn = math.sqrt(vector[0]**2+vector[1]**2)
@@ -80,12 +88,14 @@ for seg in segments:
     for i in range(0, num_points_that_fit):
         newPoints.append([seg[0][0]+(vector[0]*i), seg[0][1]+(vector[1]*i)])
 
+# Run all of the commands to get a final array
+# [x, y, c, v]
 newPoints = smooth(newPoints, 0.0016, .001)
 curves = curvature(newPoints)
 vels = velocity(newPoints, curves)
 newPoints = [[newPoints[i][0], newPoints[i][1], curves[i], vels[i]] for i in range(len(newPoints))]
-print(newPoints)
 
+# Plot the points on a graph
 axis = [0, 9.144, 0, 4.572]
 img = plt.imread("img.jpg")
 plt.plot([pt[0] for pt in newPoints], [pt[1] for pt in newPoints], "bo")
