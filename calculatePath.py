@@ -19,9 +19,9 @@ def smooth(path, b, tolerance):
                 aux = smoothPath[i][j]
                 smoothPath[i][j] += a * (path[i][j] - smoothPath[i][j]) + b * (smoothPath[i-1][j] + smoothPath[i+1][j] - (2.0 * smoothPath[i][j]))
                 change += abs(aux - smoothPath[i][j])
-    
-    return smoothPath                            
-    
+
+    return smoothPath
+
 def curvature(path):
     ret = []
     ret.append(0)
@@ -40,7 +40,7 @@ def curvature(path):
         a = k1-k2*b
         r = math.sqrt((x1-a)**2 + (y1-b)**2)
         ret.append(1/r)
-    
+
     ret.append(0)
     return ret
 
@@ -54,20 +54,20 @@ def velocity(path,curvatures):
             vel.append(0)
         else:
             vel.append(math.min(VELOCITY_MAX, K_Vel/c))
-    
+
     # smooth velocities with max acceleration
-    vel(len(arr)-1) = 0    
+    vel(len(arr)-1) = 0
     for i in reversed(xrange(len(vel)-1)):
         if i != 0:
             a = 1 # acceleration max
-            x1 = 
-            x0 = 
-            y1 = 
-            y0 = 
-            d = math.sqrt(path[i]) # distance between the points
-            vel(i) = math.sqrt(vel(i-1)**2 + 2*a*d)
+            x1 = path[i][0]
+            x0 = path[i-1][0]
+            y1 = path[i][1]
+            y0 = path[i-1][1]
+            d = math.sqrt((x1-x0)**2 + (y1-by0)**2)) # distance between the points
+            vel(i) = math.min(vel(i), math.sqrt(vel(i-1)**2 + 2*a*d))
 
-        
+
 
 
 for seg in segments:
