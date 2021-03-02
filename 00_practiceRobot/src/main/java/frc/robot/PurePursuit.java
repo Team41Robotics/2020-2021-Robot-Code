@@ -78,9 +78,18 @@ public class PurePursuit {
             }
         }
     }
-
-    public double calcCurvatureToLookAhead(double rX, double rY, double rTheta) {
-
+    /**
+     * @param rX robot x in map
+     * @param rY robot y in map
+     * @param rTheta robot theta in map
+     * @param lX lookahead point x
+     * @param lY lookahead point y
+     * @return
+    */
+    public double calcCurvatureToLookAhead(double rX, double rY, double rTheta, double lX, double lY) {
+        double a = -Math.tan(rTheta);
+        double c = Math.tan(rTheta);
+        double x = Math.abs(a*lX + b*lY +c) / Math.sqrt(a*a + b*b);
         
         return 1;
     }
