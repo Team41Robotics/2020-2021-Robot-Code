@@ -2,7 +2,7 @@ package frc.robot;
 
 public class PurePursuit {
 
-    private final double lookAheadDistance = .5;
+    private final double LOOK_AHEAD_DISTANCE = .5;
     private double[][] path;
     private int closestPointIdx = 0;
     
@@ -35,6 +35,7 @@ public class PurePursuit {
             }
         }
         
+        closestPointIdx = idx;
         return idx;
     }
 
@@ -55,7 +56,7 @@ public class PurePursuit {
 
             double a = dotProduct(segmentX, segmentY, segmentX, segmentY);
             double b = dotProduct(fX, fY, segmentX, segmentY);
-            double c = dotProduct(fX, fY, fX, fY) - lookAheadDistance*lookAheadDistance;
+            double c = dotProduct(fX, fY, fX, fY) - LOOK_AHEAD_DISTANCE*LOOK_AHEAD_DISTANCE;
 
             double discriminant = b*b-4*a*c;
             if(discriminant < 0) {
@@ -67,6 +68,8 @@ public class PurePursuit {
             if(t >= 0 && t <= 0 && t+i > lastLookAheadIdx) {
 
                 lastLookAheadIdx = t + i;
+                lookAheadX = t*segmentX + path[i][0];
+                lookAheadY = t*segmentY + path[i][1];
                 return;
             }
 
@@ -74,6 +77,8 @@ public class PurePursuit {
             if(t >= 0 && t <= 0 && t+i > lastLookAheadIdx) {
 
                 lastLookAheadIdx = t + i;
+                lookAheadX = t*segmentX + path[i][0];
+                lookAheadY = t*segmentY + path[i][1];
                 return;
             }
         }
@@ -82,15 +87,28 @@ public class PurePursuit {
      * @param rX robot x in map
      * @param rY robot y in map
      * @param rTheta robot theta in map
-     * @param lX lookahead point x
-     * @param lY lookahead point y
      * @return
     */
-    public double calcCurvatureToLookAhead(double rX, double rY, double rTheta, double lX, double lY) {
+    public double calcCurvatureToLookAhead(double rX, double rY, double rTheta) {
         double a = -Math.tan(rTheta);
-        double c = Math.tan(rTheta);
-        double x = Math.abs(a*lX + b*lY +c) / Math.sqrt(a*a + b*b);
-        
-        return 1;
+        double b = 1;
+        double c = Math.tan(rTheta)*rX - rY;
+        double x = Math.abs(a*lookAheadX + b*lookAheadY +c) / Math.sqrt(a*a + b*b);
+       
+        double curvature = (2*x)/(LOOK_AHEAD_DISTANCE*LOOK_AHEAD_DISTANCE);
+
+        // Calculate cross product between robot direction vector and vector from robot to lookahead point.
+        // Negative means counterclockwise
+        // Positive means clockwise
+        if(Math.sin(rTheta)*(lookAheadX-rX)-Math.cos(rTheta)*(lookAheadY-rY) < 0) {
+            curvature = -curvature;
+        }
+
+        return curvature;
+    }
+
+    public double getMaxVelocityAtClosestPoint() {
+
+        return path[closestPointIdx][4];
     }
 }

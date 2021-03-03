@@ -62,6 +62,8 @@ public class Robot extends TimedRobot {
 	public static Hood hood;
 	public static Driving drive;
 	public static Intake intake;
+	public static PurePursuit purePursuit;
+		
 
 	private Compressor comp;
 
@@ -72,14 +74,15 @@ public class Robot extends TimedRobot {
 	@Override
 	public void robotInit() {
 		if(!practiceRobot) {
-			lime = new Limelight();
-			turret = new Turret();
-			hood = new Hood();
+			// lime = new Limelight();
+			// turret = new Turret();
+			// hood = new Hood();
 			drive = new Driving();
-			intake = new Intake();
+			//intake = new Intake();
+			purePursuit = new PurePursuit(path);
 
-			comp = new Compressor(PORTS.PCM);
-			comp.start();
+			// comp = new Compressor(PORTS.PCM);
+			// comp.start();
 			// comp.stop();
 		}
 
@@ -99,7 +102,6 @@ public class Robot extends TimedRobot {
 	@Override
 	public void autonomousInit() {
 		
-
 		inAuton = true;
 	}
 
@@ -121,7 +123,21 @@ public class Robot extends TimedRobot {
 		// turret.periodic();	
 		// if(useHood) hood.periodic();
 		// intake.periodic();
+
 		*/
+
+		//PURE PURSUIT
+		
+		purePursuit.calculateClosestPoint(1, 1);
+		purePursuit.calculateLookAhead(rX, rY, rTheta);
+		double curvature = purePursuit.calcCurvatureToLookAhead(rX, rY, rTheta);
+
+		double maxV = purePursuit.getMaxVelocityAtClosestPoint();
+		
+		double LVel = maxV * (2 + curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
+		double RVel = maxV * (2 - curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
+
+		drive.trackWheelVelocities(LVel, RVel);
 	}
 
 	/**

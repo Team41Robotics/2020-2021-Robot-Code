@@ -29,6 +29,11 @@ public class Driving {
 	private final double L_Kp = 0.5, L_Ki = 0.025, L_Kd = 0.05;
 	private final double R_Kp = 0.5, R_Ki = 0.025, R_Kd = 0.05;
 
+	// PURE PURSUIT STUFF
+
+	private final double PP_L_Kp = .5, PP_L_Ki = 0, PP_L_Kd = 0;
+	private final double PP_R_Kp = .5, PP_R_Ki = 0, PP_R_Kd = 0;
+	private PIDController PP_leftPid, PP_rightPid;
 
 	public Driving() {
 		leftJoy = Robot.leftJoy;
@@ -43,8 +48,27 @@ public class Driving {
 
 		leftPid = new PIDController(L_Kp, L_Ki, L_Kd);
 		rightPid = new PIDController(R_Kp, R_Ki, R_Kd);
+
+		PP_leftPid = new PIDController(PP_L_Kp, PP_L_Ki, PP_L_Kd);
+		PP_rightPid = new PIDController(PP_R_Kp, PP_R_Ki, PP_R_Kd);
 	}
 
+	public void trackWheelVelocities(double LVel, double RVel) {
+
+		leftSpeed += PP_leftPid.calculate(leftEnc.getVelocity(), LVel);
+		rightSpeed += PP_rightPid.calculate(rightEnc.getVelocity(), RVel);
+
+		if(leftSpeed > 1) leftSpeed = 1;
+		if(rightSpeed > 1) rightSpeed = 1;
+
+		if(leftSpeed < -1) leftSpeed = -1;
+		if(rightSpeed < -1) rightSpeed = -1;
+
+		sparkRF.set(-rightSpeed);
+		sparkRB.set(-rightSpeed);
+		sparkLF.set(leftSpeed);
+		sparkLB.set(leftSpeed);
+	}
 
 	public void periodic() {
 		double leftAxis = leftJoy.getRawAxis(BUTTONS.DRIVER_STATION.L_JOY_Y_AXIS);
