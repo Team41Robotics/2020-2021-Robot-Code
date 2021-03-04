@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.Paths;
 import frc.robot.Intake.AUTON_STATE;
 import frc.robot.Turret.RAMP_STATE;
 
@@ -79,7 +80,7 @@ public class Robot extends TimedRobot {
 			// hood = new Hood();
 			drive = new Driving();
 			//intake = new Intake();
-			purePursuit = new PurePursuit(path);
+			purePursuit = new PurePursuit(Paths.StraightPath);
 
 			// comp = new Compressor(PORTS.PCM);
 			// comp.start();
@@ -128,7 +129,7 @@ public class Robot extends TimedRobot {
 
 		//PURE PURSUIT
 		
-		purePursuit.calculateClosestPoint(1, 1);
+		purePursuit.calculateClosestPoint(, );
 		purePursuit.calculateLookAhead(rX, rY, rTheta);
 		double curvature = purePursuit.calcCurvatureToLookAhead(rX, rY, rTheta);
 

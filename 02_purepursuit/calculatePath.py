@@ -2,7 +2,8 @@ import math
 import matplotlib.pyplot as plt
 import pandas as pd
 
-pts = [[0, 0], [1, 1], [2, 1], [3, 2], [4, 4], [5, 3], [5.2, 2]]
+#pts = [[0, 0], [1, 1], [2, 1], [3, 2], [4, 4], [5, 3], [5.2, 2]]
+pts = [[0,0], [2,0], [3,0], [5,0]]
 SPACING = 0.1524
 newPoints = []
 segments = [[pts[i-1], pts[i]] for i in range(1, len(pts))]
@@ -37,6 +38,10 @@ def curvature(path):
         y1 = path[i-1][1]
         y2 = path[i][1]
         y3 = path[i+1][1]
+
+        # prevent divide by zero errors for straight line edge case
+        x1 += .001
+        y1 += .001
 
         # Complicated math
         k1 = 0.5 * (x1**2 + y1**2 - x2**2 - y2**2) / (x1-x2)
@@ -102,3 +107,15 @@ plt.plot([pt[0] for pt in newPoints], [pt[1] for pt in newPoints], "bo")
 plt.axis(axis)
 plt.imshow(img, extent=axis)
 plt.show()
+
+print(newPoints)
+
+f = open("straightPath.txt", "w")
+f.write("{")
+for i in newPoints:
+    f.write("{")
+    for j in i:
+        f.write(str(j) + ", ")
+    f.write("},")
+f.write("}")
+f.close()

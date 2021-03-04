@@ -109,6 +109,6 @@ public class PurePursuit {
 
     public double getMaxVelocityAtClosestPoint() {
 
-        return path[closestPointIdx][4];
+        return path[closestPointIdx][3];
     }
 }
