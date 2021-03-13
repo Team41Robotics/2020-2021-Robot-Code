@@ -79,7 +79,7 @@ public class Driving {
 		if(Math.abs(rightAxis) < deadband)
 			rightAxis = 0;
 
-
+		/*
 		// This slows down driving (useful for intaking balls since that requires slow speeds)
 		if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_RIGHT) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_LEFT)) {
 			leftAxis *= 0.45;
@@ -92,7 +92,7 @@ public class Driving {
 		}
 		else {
 			// Use speed multiplier to slow down driving. Default is 1.0
-			final double speedMultiplierIncrement = 0.1;
+			final double speedMultiplierIncrement = 1.0;
 			if(leftJoy.getRawButtonPressed(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_LEFT) && speedMultiplier >= speedMultiplierIncrement) {
 				speedMultiplier -= speedMultiplierIncrement;
 				System.out.println("Drivetrain Speed Multiplier -> " + speedMultiplier);
@@ -113,10 +113,11 @@ public class Driving {
 				rightSpeed += rightAxis;
 			}
 		}
-		else {
+		*/
+		//else {
 			leftSpeed = leftAxis;
 			rightSpeed = rightAxis;
-		}
+		//}
 
 		// For safety
 		if(leftSpeed > 1) leftSpeed = 1;

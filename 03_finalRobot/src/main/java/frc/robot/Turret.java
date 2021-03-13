@@ -39,15 +39,15 @@ public class Turret {
 	
 	// Constants
 	private final double MAX_FALCON_ENCODER_RATE = 20_000;
-	private final double TURRET_ANGLE_CLOCKWISE_MAX = -113; // Max clockwise angle
-	private final double TURRET_ANGLE_COUNTERCLOCKWISE_MAX = 100; // Max counterclockwise angle
+	private final double TURRET_ANGLE_CLOCKWISE_MAX = -83.117; // Max clockwise angle
+	private final double TURRET_ANGLE_COUNTERCLOCKWISE_MAX = 68; // Max counterclockwise angle
 	private final double FALCON_Kp = 1.2, FALCON_Ki = 0.2, FALCON_Kd = 0.0;
 	private final double ROTATE_Kp = 0.025, ROTATE_Ki = 0.0075, ROTATE_Kd = 0.0; // 0.065, 0.0075, 0.0175
 
 	public Turret() {
 		driverstation = Robot.driverstation;
 
-		falconTalon = new TalonFX(PORTS.FALCON_TALON);
+		falconTalon = new TalonFX(PORTS.SHOOTER_FALCON);
 		rotateSpark = new CANSparkMax(PORTS.ROTATE_SPARK, MotorType.kBrushless);
 		
 		falconTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
@@ -62,7 +62,7 @@ public class Turret {
 		rotatePID = new PIDController(ROTATE_Kp, ROTATE_Ki, ROTATE_Kd);
 		falconPID = new PIDController(FALCON_Kp, FALCON_Ki, FALCON_Kd);
 
-		// this.lime = Robot.lime;
+		this.lime = Robot.lime;
 
 		turretInit();
 	}
@@ -76,8 +76,10 @@ public class Turret {
 	}
 
 	public void periodic() {
-		shoot();
-		rotate();
+		//shoot();
+		//rotate();
+
+		zeroTurret();
 	}
 
 	/**
@@ -272,7 +274,7 @@ public class Turret {
 				rotatePID.reset(); //resets accumulated integral error when within threshold
 			}
 		}
-		double rotateSpeedMult = 1.0;
+		double rotateSpeedMult = 0.7;
 		double rotateEncVal = rotateEncoder.getPosition();
 		if((rotateEncVal > 0 && Math.abs(TURRET_ANGLE_COUNTERCLOCKWISE_MAX - rotateEncVal) < 20) || 
 			(rotateEncVal < 0 && Math.abs(TURRET_ANGLE_CLOCKWISE_MAX - rotateEncVal) < 20))
@@ -297,7 +299,7 @@ public class Turret {
 			System.out.println("Turret Zeroed");
         }
         else {
-			rotateSpeed = -0.1; // Slowly rotate counterclockwise ... until limit is hit
+			rotateSpeed = -0.07; // Slowly rotate counterclockwise ... until limit is hit
 			turretZeroed = false;
 		}
 		rotateSpark.set(rotateSpeed);

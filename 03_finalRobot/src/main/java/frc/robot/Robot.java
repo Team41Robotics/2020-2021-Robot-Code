@@ -7,14 +7,15 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Joystick;
+
+import edu.wpi.first.wpilibj.DigitalInput;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.TimedRobot;
-
-
+import com.revrobotics.CANEncoder;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -26,31 +27,54 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
 	public final static boolean useHood = false;
 	
-	public static Joystick controller = new Joystick(1);
-	public static Joystick extraJoy = new Joystick(5);
 	public static Joystick driverstation = new Joystick(2);
 	public static Joystick leftJoy = new Joystick(3);
 	public static Joystick rightJoy = new Joystick(4);
 	
-	// public static Limelight lime;
-	// public static Turret turret;
+	public static Limelight lime;
+	public static Turret turret;
 	// public static Hood hood;
-	//public static Intake intake;
-	// public static Driving drive;
+	// public static Intake intake;
+	public static Driving drive;
+	public static Indexer indexer;
+	private Compressor comp;
 
 	//Testing Purposes
-	private final MotorType kBrushless = MotorType.kBrushless;
-	private CANSparkMax spark;
-	private TalonFX falconTalon;
+	/*
+	private CANSparkMax rotateSpark;
+	private double rotateSpeed;
+	private DigitalInput rotateLimitLeft, rotateLimitCenter, rotateLimitRight;
+	private CANEncoder rotateEncoder;
+	*/
+
 	
 	@Override
 	public void robotInit() {
-		// lime = new Limelight();
-		// turret = new Turret();
+		lime = new Limelight();
+		turret = new Turret();
 		// hood = new Hood();
 		// intake = new Intake();
-		// drive = new Driving();
+		indexer = new Indexer();
+		drive = new Driving();
+		
+		/*
+		rotateSpark = new CANSparkMax(PORTS.ROTATE_SPARK, MotorType.kBrushless);
+		
+		rotateEncoder = rotateSpark.getEncoder();
+		// Show encoder data in degrees of rotation (with 0 being straight forward)
+		rotateEncoder.setPositionConversionFactor((1.0/7.0) * (16.0/132.0) * 360.0); // 1:7 gear ratio times 16:132 sprockets
 
+		rotateLimitLeft = new DigitalInput(PORTS.ROTATE_LIMIT_LEFT);
+		rotateLimitCenter = new DigitalInput(PORTS.ROTATE_LIMIT_CENTER);
+		rotateLimitRight = new DigitalInput(PORTS.ROTATE_LIMIT_RIGHT);
+		*/
+
+		//comp = new Compressor(PORTS.PCM);
+		//comp.clearAllPCMStickyFaults();
+		//comp.setClosedLoopControl(true);
+		//System.out.println("Compressor Start");
+		//comp.start();
+		
 		// Start driver camera
 		// UsbCamera cam = CameraServer.getInstance().startAutomaticCapture();
 		// cam.setVideoMode(PixelFormat.kMJPEG, 80, 60, 60);
@@ -72,41 +96,59 @@ public class Robot extends TimedRobot {
 	}
 
 	@Override
-	public void teleopInit() {
-		
+	public void teleopInit() {	
+		// rotateSpeed = 0;
 	}
 
 	@Override
 	public void teleopPeriodic() {
-		// lime.periodic();
-		// turret.periodic();
+		lime.periodic();
+		turret.periodic();
 		// if(useHood) hood.periodic();
+		drive.periodic();
+		// intake.periodic();
+		// indexer.periodic();
+
+		/*
+		System.out.println();
+		if(!rotateLimitCenter.get())
+			rotateEncoder.setPosition(0);
+
+		if((!rotateLimitRight.get() || !rotateLimitLeft.get()) && !rotateLimitCenter.get())
+			rotateSpeed = 0;
+		else if(rotateLimitLeft.get() && driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_UP))
+			rotateSpeed = 0.07;
+		else if(rotateLimitRight.get() && driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_DOWN))
+			rotateSpeed = -0.07;
+		else
+			rotateSpeed = 0;
+		System.out.println("Rotate Encoder: " + rotateEncoder.getPosition());
+		rotateSpark.set(rotateSpeed);
+		*/
+
+		/*
+		System.out.println("Left Toggle: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_L));
+		System.out.println("Middle Toggle: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_M));
+		System.out.println("Right Toggle: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_R));
+		System.out.println("Left Rocker Up: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_UP));
+		System.out.println("Left Rocker Down: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_DOWN));
+		System.out.println("Middle Rocker Up: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_M_UP));
+		System.out.println("Middle Rocker Down: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_M_DOWN));
+		System.out.println("Right Rocker Up: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_R_UP));
+		System.out.println("Right Rocker Down: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_R_DOWN));
+		*/
+
 		
-		// drive.periodic();
 	}
+	
 
 	@Override
 	public void testInit() {
-		spark = new CANSparkMax(0, kBrushless);
-		// falconTalon = new TalonFX(0);
+		
 	}
 
 	@Override
 	public void testPeriodic() {
-		// Get Joystick Axis
-		double leftAxis = leftJoy.getRawAxis(BUTTONS.DRIVER_STATION.L_JOY_Y_AXIS);
-		double rightAxis = rightJoy.getRawAxis(BUTTONS.DRIVER_STATION.R_JOY_Y_AXIS);
-
-		// Set large deadband to stop robot from moving when it shouldn't be
-		final double deadband = 0.15;
-		if(Math.abs(leftAxis) < deadband)
-			leftAxis = 0;
-		if(Math.abs(rightAxis) < deadband)
-			rightAxis = 0;
-		
-		// Set Motor Speed
-		spark.set(leftAxis);
-		// falconTalon.set(ControlMode.PercentOutput, leftAxis); 
 	}
 
 	@Override

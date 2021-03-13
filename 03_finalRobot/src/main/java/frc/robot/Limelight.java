@@ -32,7 +32,6 @@ class Limelight {
 		pipeline = limelight.getEntry("pipeline");
 
 		this.useHood = Robot.useHood;
-
 		// Initialize LED configuration
 		ledMode.setNumber(1); // Set it to off
 		pipeline.setNumber(0); // Sets network tables pipeline to Standard (1x Zoom)
@@ -124,7 +123,8 @@ class Limelight {
 	 * Turns the Limelight lights on or off
 	 */
 	private void updateTracking() {
-		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_M)) {
+		//if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_M)) {
+		if(true){
 			if(!isTracking) { // So we don't repeatedly set the mode to on
 				ledMode.setNumber(3);
 				isTracking = true;
