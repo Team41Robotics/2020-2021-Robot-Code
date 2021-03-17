@@ -2,7 +2,7 @@ package frc.robot;
 
 public class PurePursuit {
 
-    private final double LOOK_AHEAD_DISTANCE = .5;
+    private final double LOOK_AHEAD_DISTANCE = 1.5;
     private double[][] path;
     private int closestPointIdx = 0;
     
@@ -21,7 +21,7 @@ public class PurePursuit {
     public int calculateClosestPoint(double rX, double rY/*localization*/) {
     
         int idx = closestPointIdx;
-        double minD = 0;
+        double minD = distanceCalc(rX, rY, path[closestPointIdx][0], path[closestPointIdx][1]);
         double pX = 0;
         double pY = 0;
         double d = 0;
@@ -36,6 +36,7 @@ public class PurePursuit {
         }
         
         closestPointIdx = idx;
+        //System.out.println("Closest point: " + path[closestPointIdx][0] + " " + path[closestPointIdx][1]);
         return idx;
     }
 
@@ -65,7 +66,7 @@ public class PurePursuit {
             }
 
             double t = (-b - discriminant) / (2*a);
-            if(t >= 0 && t <= 0 && t+i > lastLookAheadIdx) {
+            if(t >= 0 && t <= 1 && t+i > lastLookAheadIdx) {
 
                 lastLookAheadIdx = t + i;
                 lookAheadX = t*segmentX + path[i][0];
@@ -74,7 +75,7 @@ public class PurePursuit {
             }
 
             t = (-b + discriminant) / (2*a);
-            if(t >= 0 && t <= 0 && t+i > lastLookAheadIdx) {
+            if(t >= 0 && t <= 1 && t+i > lastLookAheadIdx) {
 
                 lastLookAheadIdx = t + i;
                 lookAheadX = t*segmentX + path[i][0];
@@ -97,6 +98,8 @@ public class PurePursuit {
        
         double curvature = (2*x)/(LOOK_AHEAD_DISTANCE*LOOK_AHEAD_DISTANCE);
 
+        System.out.println("Look ahead: " + lookAheadX + " " + lookAheadY);
+
         // Calculate cross product between robot direction vector and vector from robot to lookahead point.
         // Negative means counterclockwise
         // Positive means clockwise
@@ -109,6 +112,6 @@ public class PurePursuit {
 
     public double getMaxVelocityAtClosestPoint() {
 
-        return path[closestPointIdx][3];
+        return path[closestPointIdx == 0 ? closestPointIdx + 1 : closestPointIdx][3];
     }
 }

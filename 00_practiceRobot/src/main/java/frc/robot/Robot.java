@@ -31,6 +31,8 @@ package frc.robot;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -68,6 +70,8 @@ public class Robot extends TimedRobot {
 
 	private Compressor comp;
 
+	private NetworkTable realsense;
+
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -80,7 +84,7 @@ public class Robot extends TimedRobot {
 			// hood = new Hood();
 			drive = new Driving();
 			//intake = new Intake();
-			purePursuit = new PurePursuit(Paths.StraightPath);
+			purePursuit = new PurePursuit(Paths.competitionPath1);
 
 			// comp = new Compressor(PORTS.PCM);
 			// comp.start();
@@ -90,6 +94,8 @@ public class Robot extends TimedRobot {
 		// Start driver camera
 		UsbCamera cam = CameraServer.getInstance().startAutomaticCapture();
 		cam.setVideoMode(PixelFormat.kMJPEG, 80, 60, 60);
+
+		realsense = NetworkTableInstance.getDefault().getTable("realsense");
 	}
 
 	@Override
@@ -128,17 +134,30 @@ public class Robot extends TimedRobot {
 		*/
 
 		//PURE PURSUIT
+	  double xR = realsense.getEntry("xFieldRobot").getDouble(0);
+      double yR = realsense.getEntry("yFieldRobot").getDouble(0);
+	  double thetaR = realsense.getEntry("thetaFieldRobot").getDouble(0);
+	  thetaR = thetaR/180*Math.PI;
+	  
+	  //System.out.println(xR+ " " + yR + " " + thetaR);
 		
-		purePursuit.calculateClosestPoint(, );
-		purePursuit.calculateLookAhead(rX, rY, rTheta);
-		double curvature = purePursuit.calcCurvatureToLookAhead(rX, rY, rTheta);
+		purePursuit.calculateClosestPoint(xR, yR);
+		purePursuit.calculateLookAhead(xR, yR, thetaR);
+		double curvature = purePursuit.calcCurvatureToLookAhead(xR, yR, thetaR);
+		//System.out.println(curvature);
 
 		double maxV = purePursuit.getMaxVelocityAtClosestPoint();
+		//System.out.println("maxV: " + maxV);
+		System.out.println("omega:" + curvature*maxV);
 		
 		double LVel = maxV * (2 + curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
 		double RVel = maxV * (2 - curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
 
-		drive.trackWheelVelocities(LVel, RVel);
+		//System.out.println(LVel + " " + RVel);
+
+		if(maxV == 0) drive.stopMotors();
+		else drive.trackWheelVelocities(LVel, RVel);
+		//drive.trackWheelVelocities(Constants.DriveConstants.kTrackwidthMeters/2*Math.PI/4, -Constants.DriveConstants.kTrackwidthMeters/2*Math.PI/4);
 	}
 
 	/**

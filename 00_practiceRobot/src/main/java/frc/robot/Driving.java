@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.DriveConstants;
 
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
@@ -26,13 +27,13 @@ public class Driving {
 	// Old - Too jerky
 	// private final double L_Kp = 1.0, L_Ki = 0.05, L_Kd = 0.1;
 	// private final double R_Kp = 1.0, R_Ki = 0.05, R_Kd = 0.1;
-	private final double L_Kp = 0.5, L_Ki = 0.025, L_Kd = 0.05;
-	private final double R_Kp = 0.5, R_Ki = 0.025, R_Kd = 0.05;
+	private final double L_Kp = 0.05, L_Ki = 0.025, L_Kd = 0.05;
+	private final double R_Kp = 0.05, R_Ki = 0.025, R_Kd = 0.05;
 
 	// PURE PURSUIT STUFF
 
-	private final double PP_L_Kp = .5, PP_L_Ki = 0, PP_L_Kd = 0;
-	private final double PP_R_Kp = .5, PP_R_Ki = 0, PP_R_Kd = 0;
+	private final double PP_L_Kp = .011, PP_L_Ki = 0, PP_L_Kd = 0;
+	private final double PP_R_Kp = .011, PP_R_Ki = 0, PP_R_Kd = 0;
 	private PIDController PP_leftPid, PP_rightPid;
 
 	public Driving() {
@@ -45,6 +46,12 @@ public class Driving {
 
 		leftEnc = sparkLF.getEncoder();
 		rightEnc = sparkRF.getEncoder();
+		leftEnc.setVelocityConversionFactor(DriveConstants.kEncoderDistancePerPulse);
+		rightEnc.setVelocityConversionFactor(DriveConstants.kEncoderDistancePerPulse);
+		//leftEnc.setVelocityConversionFactor(1.0/20);
+		//rightEnc.setVelocityConversionFactor(1.0/20);
+		//leftEnc.setPositionConversionFactor(1.0/20);
+		//rightEnc.setPositionConversionFactor(1.0/20);
 
 		leftPid = new PIDController(L_Kp, L_Ki, L_Kd);
 		rightPid = new PIDController(R_Kp, R_Ki, R_Kd);
@@ -55,7 +62,8 @@ public class Driving {
 
 	public void trackWheelVelocities(double LVel, double RVel) {
 
-		leftSpeed += PP_leftPid.calculate(leftEnc.getVelocity(), LVel);
+		//System.out.println(leftEnc.getPosition());
+		leftSpeed += PP_leftPid.calculate(-leftEnc.getVelocity(), LVel); //leftEnc is inverted for some reason?
 		rightSpeed += PP_rightPid.calculate(rightEnc.getVelocity(), RVel);
 
 		if(leftSpeed > 1) leftSpeed = 1;
@@ -64,10 +72,20 @@ public class Driving {
 		if(leftSpeed < -1) leftSpeed = -1;
 		if(rightSpeed < -1) rightSpeed = -1;
 
-		sparkRF.set(-rightSpeed);
-		sparkRB.set(-rightSpeed);
-		sparkLF.set(leftSpeed);
-		sparkLB.set(leftSpeed);
+		System.out.println("leftVel:" + leftSpeed + " rightVel: " + rightSpeed);
+
+		sparkRF.set(rightSpeed);
+		sparkRB.set(rightSpeed);
+		sparkLF.set(-leftSpeed);
+		sparkLB.set(-leftSpeed);
+	}
+
+	public void stopMotors() {
+		sparkRF.set(0);
+		sparkRB.set(0);
+		sparkLF.set(0);
+		sparkLB.set(0);
+
 	}
 
 	public void periodic() {

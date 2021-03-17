@@ -3,10 +3,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 #pts = [[0, 0], [1, 1], [2, 1], [3, 2], [4, 4], [5, 3], [5.2, 2]]
-pts = [[0,0], [2,0], [3,0], [5,0]]
+INCH_PER_M = 39.37
+#pts = [[0,0], [30,0], [60,10], [90,60], [120, 80], [150, 88], [180, 70], [210, 60], [240, 30], [270, 0], [300, 10], [310, 30], [300, 55], [270, 60], [240, 50], [220, 5], [210, 0], [120, 0], [90, 5], [60, 25], [30, 60]]
+pts = [[0, 0],[37.5, 8.75], [73, 8.75], [97.5, 1.25], [127.5, -47.5], [97.5, -55], [90, -16], [120, 1.25], [157.5, 12.5], [198.75,27.5],[225,72.5],[197,68.75],[180,16.25],[187.5, -10], [212, -55], [247.5, -58.75], [277.5, -13.75], [187.5, 16.25], [157.5, 23.75], [120, 27.5], [82.5,23.75], [45, 23.75], [7.5, 23.75]]
+
+# inches to m
+temp_points = []
+for pt in pts:
+    temp_points.append([pt[0]/INCH_PER_M, pt[1]/INCH_PER_M])
+    
+pts = temp_points
+
+
 SPACING = 0.1524
 newPoints = []
 segments = [[pts[i-1], pts[i]] for i in range(1, len(pts))]
+
 
 # Use complicated math to smooth the path we made
 def smooth(path, b, tolerance):
@@ -42,11 +54,18 @@ def curvature(path):
         # prevent divide by zero errors for straight line edge case
         x1 += .001
         y1 += .001
+        y3+= .001
+        x3 += .001
 
         # Complicated math
         k1 = 0.5 * (x1**2 + y1**2 - x2**2 - y2**2) / (x1-x2)
         k2 = (y1-y2)/(x1-x2)
-        b = 0.5 * (x2**2-(2*x2*k1) + y2**2-x3**2+(2*x3*k1)-y3**2) / ((x3*k2)-y3+y2-(x2*k2))
+
+        div = ((x3*k2)-y3+y2-(x2*k2))
+        if div == 0:
+            div = .001
+
+        b = 0.5 * (x2**2-(2*x2*k1) + y2**2-x3**2+(2*x3*k1)-y3**2) / div
         a = k1-k2*b
         r = math.sqrt((x1-a)**2 + (y1-b)**2)
         # Curvature v
@@ -57,7 +76,7 @@ def curvature(path):
     return ret
 
 
-VELOCITY_MAX = 5
+VELOCITY_MAX = .5
 K_Vel = 1 # Apparently should be set between 1-5
 def velocity(path,curvatures):
     # Find initial velocities
@@ -95,15 +114,20 @@ for seg in segments:
 
 # Run all of the commands to get a final array
 # [x, y, c, v]
-newPoints = smooth(newPoints, 0.0016, .001)
+# Good smoothing constants: .0016, .001
+newPoints = smooth(newPoints, 0.003, .01)
 curves = curvature(newPoints)
 vels = velocity(newPoints, curves)
 newPoints = [[newPoints[i][0], newPoints[i][1], curves[i], vels[i]] for i in range(len(newPoints))]
 
+#X_START = .762
+#Y_START = .762
+X_START = 1.143
+Y_START = 2.16
 # Plot the points on a graph
 axis = [0, 9.144, 0, 4.572]
 img = plt.imread("img.jpg")
-plt.plot([pt[0] for pt in newPoints], [pt[1] for pt in newPoints], "bo")
+plt.plot([pt[0] + X_START for pt in newPoints], [pt[1] + Y_START for pt in newPoints], "bo")
 plt.axis(axis)
 plt.imshow(img, extent=axis)
 plt.show()
