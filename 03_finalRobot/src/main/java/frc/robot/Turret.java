@@ -76,10 +76,8 @@ public class Turret {
 	}
 
 	public void periodic() {
-		//shoot();
-		//rotate();
-
-		zeroTurret();
+		shoot();
+		rotate();
 	}
 
 	/**
@@ -104,6 +102,9 @@ public class Turret {
 				falconOutputSpeed += shooterSpeed;
 			}
 		}
+
+		System.out.println("Falcon Speed: " + -falconOutputSpeed);
+		SmartDashboard.putNumber("Falcon Output Speed", falconOutputSpeed);
 		falconTalon.set(ControlMode.PercentOutput, -falconOutputSpeed);
 
 		SmartDashboard.putNumber("shooter speed", shooterSpeed);
@@ -218,10 +219,10 @@ public class Turret {
 	 * @param controller
 	 */
 	private void rotate() {
-		// if(!turretZeroed) { // Don't move if not zeroed yet
-		// 	zeroTurret();
-		// 	return;
-		// }
+		/*if(!turretZeroed) { // Don't move if not zeroed yet
+			zeroTurret();
+			return;
+		}*/
 
 		// If limit is clicked, zero the encoder
 		// If ONLY home limit is clicked
@@ -274,12 +275,14 @@ public class Turret {
 				rotatePID.reset(); //resets accumulated integral error when within threshold
 			}
 		}
-		double rotateSpeedMult = 0.7;
+		double rotateSpeedMult = 1.0;
 		double rotateEncVal = rotateEncoder.getPosition();
 		if((rotateEncVal > 0 && Math.abs(TURRET_ANGLE_COUNTERCLOCKWISE_MAX - rotateEncVal) < 20) || 
 			(rotateEncVal < 0 && Math.abs(TURRET_ANGLE_CLOCKWISE_MAX - rotateEncVal) < 20))
 			rotateSpeedMult = 0.5;
 		rotateSpark.set(speed*rotateSpeedMult);
+		//System.out.println("Speed: " + speed*rotateSpeedMult);
+
 	}
 
 	private void zeroTurret() {
@@ -315,8 +318,8 @@ public class Turret {
 	 */
 	private boolean getRotateLimit(Direction dir) {
 		if(dir == Direction.CLOCKWISE)
-			return !rotateLimitCenter.get() && !rotateLimitRight.get();
+			return !rotateLimitRight.get();
 		// If rotating counterclockwise
-		return !rotateLimitCenter.get() && !rotateLimitLeft.get();
+		return !rotateLimitLeft.get();
 	}
 }

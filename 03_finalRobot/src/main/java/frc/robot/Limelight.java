@@ -17,8 +17,8 @@ class Limelight {
 	private final boolean useHood;
 	private boolean hoodDown = true;
 
-	private final double a1 = Math.toRadians(13.5), // Angle of camera relative to the ground
-	h1 = 0.7, // Height from geound to center of limelight (in meters)
+	private final double a1 = Math.toRadians(23), // 13.5 previously Angle of camera relative to the ground
+	h1 = 0.64, // Height from geound to center of limelight (in meters)
 	h2 = 2.30505; // Height to center of vision target (quarter of the height of the hexagon) (in meters)
 
 	private final boolean flywheel = false;
@@ -42,16 +42,16 @@ class Limelight {
 		ledMode.setNumber(3);
 		isTracking = true;
 
-		// SmartDashboard.putNumber("Distance to Target", getDistance());
-		// SmartDashboard.putNumber("Limelight Target Shooter Speed", getTargetShooterSpeed());
+		SmartDashboard.putNumber("Distance to Target", getDistance());
+		SmartDashboard.putNumber("Limelight Target Shooter Speed", getTargetShooterSpeed());
 	}
 
 	public void periodic() {
 		updatePipeline();
 		updateTracking();
 
-		// SmartDashboard.putNumber("Distance to Target", getDistance());
-		// SmartDashboard.putNumber("Limelight Target Shooter Speed", getTargetShooterSpeed());
+		SmartDashboard.putNumber("Distance to Target", getDistance());
+		SmartDashboard.putNumber("Limelight Target Shooter Speed", getTargetShooterSpeed());
 	}
 
 	/**
@@ -123,8 +123,7 @@ class Limelight {
 	 * Turns the Limelight lights on or off
 	 */
 	private void updateTracking() {
-		//if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_M)) {
-		if(true){
+		if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.RIGHT_TOGGLE_BUTTON)) {
 			if(!isTracking) { // So we don't repeatedly set the mode to on
 				ledMode.setNumber(3);
 				isTracking = true;

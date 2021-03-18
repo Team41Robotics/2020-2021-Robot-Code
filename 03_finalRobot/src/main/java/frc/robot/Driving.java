@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.DriveConstants;
 
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
@@ -23,12 +24,12 @@ public class Driving {
 	private boolean usePid = false;
 
 	private final double MAX_DRIVE_SPEED = 5_500;
-	private final double L_Kp = 0.5, L_Ki = 0.025, L_Kd = 0.05;
-	private final double R_Kp = 0.5, R_Ki = 0.025, R_Kd = 0.05;
+	private final double L_Kp = 0.02, L_Ki = 0, L_Kd = 0.00615;
+	private final double R_Kp = 0.02, R_Ki = 0, R_Kd = 0.00615;
 
 	// PURE PURSUIT STUFF
-	private final double PP_L_Kp = .5, PP_L_Ki = 0, PP_L_Kd = 0;
-	private final double PP_R_Kp = .5, PP_R_Ki = 0, PP_R_Kd = 0;
+	private final double PP_L_Kp = .011, PP_L_Ki = 0, PP_L_Kd = 0;
+	private final double PP_R_Kp = .011, PP_R_Ki = 0, PP_R_Kd = 0;
 	private PIDController PP_leftPid, PP_rightPid;
 
 	public Driving() {
@@ -40,7 +41,17 @@ public class Driving {
 		sparkRB = new CANSparkMax(PORTS.SPARK_RB, kBrushless);
 
 		leftEnc = sparkLF.getEncoder();
-		rightEnc = sparkRF.getEncoder();
+		rightEnc = sparkRB.getEncoder();
+
+		leftEnc.setPosition(0);
+		rightEnc.setPosition(0);
+		//leftEnc.setPositionConversionFactor(1.0/12.0);
+		//rightEnc.setPositionConversionFactor(1.0/12.0);
+		
+		//leftEnc.setVelocityConversionFactor(1.0/12.0/60.0);
+		//rightEnc.setVelocityConversionFactor(1.0/12.0/60.0);
+		leftEnc.setVelocityConversionFactor(DriveConstants.kEncoderDistancePerPulse);
+		rightEnc.setVelocityConversionFactor(DriveConstants.kEncoderDistancePerPulse);
 
 		leftPid = new PIDController(L_Kp, L_Ki, L_Kd);
 		rightPid = new PIDController(R_Kp, R_Ki, R_Kd);
@@ -51,8 +62,11 @@ public class Driving {
 
 	public void trackWheelVelocities(double LVel, double RVel) {
 
-		leftSpeed += PP_leftPid.calculate(leftEnc.getVelocity(), LVel);
-		rightSpeed += PP_rightPid.calculate(rightEnc.getVelocity(), RVel);
+		double leftVelocity = leftEnc.getVelocity();
+		double rightVelocity = rightEnc.getVelocity();
+
+		leftSpeed += leftPid.calculate(-leftVelocity, LVel);
+		rightSpeed += rightPid.calculate(rightVelocity, RVel);
 
 		if(leftSpeed > 1) leftSpeed = 1;
 		if(rightSpeed > 1) rightSpeed = 1;
@@ -60,10 +74,20 @@ public class Driving {
 		if(leftSpeed < -1) leftSpeed = -1;
 		if(rightSpeed < -1) rightSpeed = -1;
 
-		sparkRF.set(-rightSpeed);
-		sparkRB.set(-rightSpeed);
-		sparkLF.set(leftSpeed);
-		sparkLB.set(leftSpeed);
+		sparkRF.set(rightSpeed);
+		sparkRB.set(rightSpeed);
+		sparkLF.set(-leftSpeed);
+		sparkLB.set(-leftSpeed);
+		
+
+		//System.out.println("Left Encoder Velocity: " + leftEnc.getVelocity());
+		//System.out.println("Right Encoder Velocity: " + rightEnc.getVelocity());
+
+	
+		SmartDashboard.putNumber("left speed", -leftSpeed);
+		SmartDashboard.putNumber("right speed", rightSpeed);
+		SmartDashboard.putNumber("left drivetrain encoder velocity", -leftEnc.getVelocity());
+		SmartDashboard.putNumber("right drivetrain encoder velocity", rightEnc.getVelocity());
 	}
 
 
@@ -79,7 +103,7 @@ public class Driving {
 		if(Math.abs(rightAxis) < deadband)
 			rightAxis = 0;
 
-		/*
+		
 		// This slows down driving (useful for intaking balls since that requires slow speeds)
 		if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_RIGHT) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_LEFT)) {
 			leftAxis *= 0.45;
@@ -113,11 +137,11 @@ public class Driving {
 				rightSpeed += rightAxis;
 			}
 		}
-		*/
-		//else {
+		
+		else {
 			leftSpeed = leftAxis;
 			rightSpeed = rightAxis;
-		//}
+		}
 
 		// For safety
 		if(leftSpeed > 1) leftSpeed = 1;
@@ -131,8 +155,8 @@ public class Driving {
 		SmartDashboard.putNumber("right speed", rightSpeed);
 		SmartDashboard.putNumber("left axis", leftAxis);
 		SmartDashboard.putNumber("right axis", rightAxis);
-		SmartDashboard.putNumber("left drivetrain encoder velocity", leftEnc.getVelocity()/MAX_DRIVE_SPEED);
-		SmartDashboard.putNumber("right drivetrain encoder velocity", rightEnc.getVelocity()/MAX_DRIVE_SPEED);
+		SmartDashboard.putNumber("left drivetrain encoder velocity", leftEnc.getVelocity());
+		SmartDashboard.putNumber("right drivetrain encoder velocity", rightEnc.getVelocity());
 	}
 
 	private void drive() {

@@ -34,7 +34,7 @@ public class Robot extends TimedRobot {
 	public static Limelight lime;
 	public static Turret turret;
 	// public static Hood hood;
-	// public static Intake intake;
+	public static Intake intake;
 	public static Driving drive;
 	public static Indexer indexer;
 	private Compressor comp;
@@ -53,7 +53,7 @@ public class Robot extends TimedRobot {
 		lime = new Limelight();
 		turret = new Turret();
 		// hood = new Hood();
-		// intake = new Intake();
+		intake = new Intake();
 		indexer = new Indexer();
 		drive = new Driving();
 		
@@ -69,11 +69,11 @@ public class Robot extends TimedRobot {
 		rotateLimitRight = new DigitalInput(PORTS.ROTATE_LIMIT_RIGHT);
 		*/
 
-		//comp = new Compressor(PORTS.PCM);
-		//comp.clearAllPCMStickyFaults();
-		//comp.setClosedLoopControl(true);
+		comp = new Compressor(PORTS.PCM);
+		comp.clearAllPCMStickyFaults();
+		comp.setClosedLoopControl(true);
 		//System.out.println("Compressor Start");
-		//comp.start();
+		comp.start();
 		
 		// Start driver camera
 		// UsbCamera cam = CameraServer.getInstance().startAutomaticCapture();
@@ -92,7 +92,7 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void autonomousPeriodic() {
-	
+		drive.trackWheelVelocities(0.5, 0.5);
 	}
 
 	@Override
@@ -106,25 +106,8 @@ public class Robot extends TimedRobot {
 		turret.periodic();
 		// if(useHood) hood.periodic();
 		drive.periodic();
-		// intake.periodic();
-		// indexer.periodic();
-
-		/*
-		System.out.println();
-		if(!rotateLimitCenter.get())
-			rotateEncoder.setPosition(0);
-
-		if((!rotateLimitRight.get() || !rotateLimitLeft.get()) && !rotateLimitCenter.get())
-			rotateSpeed = 0;
-		else if(rotateLimitLeft.get() && driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_UP))
-			rotateSpeed = 0.07;
-		else if(rotateLimitRight.get() && driverstation.getRawButton(BUTTONS.DRIVER_STATION.ROCKER_L_DOWN))
-			rotateSpeed = -0.07;
-		else
-			rotateSpeed = 0;
-		System.out.println("Rotate Encoder: " + rotateEncoder.getPosition());
-		rotateSpark.set(rotateSpeed);
-		*/
+		intake.periodic();
+		indexer.periodic();
 
 		/*
 		System.out.println("Left Toggle: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_L));

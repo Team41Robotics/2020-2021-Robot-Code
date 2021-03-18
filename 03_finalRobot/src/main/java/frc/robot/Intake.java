@@ -22,16 +22,16 @@ class Intake {
 		solenoidLeft = new DoubleSolenoid(PORTS.PCM, PORTS.LEFT_SOLENOID_FORWARD, PORTS.LEFT_SOLENOID_BACKWARD);
 		solenoidRight = new DoubleSolenoid(PORTS.PCM, PORTS.RIGHT_SOLENOID_FORWARD, PORTS.RIGHT_SOLENOID_BACKWARD);
 		solenoidHood = new DoubleSolenoid(PORTS.PCM, PORTS.HOOD_SOLENOID_FORWARD, PORTS.HOOD_SOLENOID_BACKWARD);
-		ballIntake = new TalonSRX(13);
+		ballIntake = new TalonSRX(PORTS.INTAKE_TALON);
 
 		intakeInit();
 	}
 
 	private void intakeInit() {
 		System.out.println("Solenoid Reverse");
-		/*solenoidLeft.set(Value.kReverse);
-		solenoidRight.set(Value.kReverse);
-		solenoidHood.set(Value.kReverse);*/
+		//solenoidLeft.set(Value.kReverse);
+		//solenoidRight.set(Value.kReverse);
+		//solenoidHood.set(Value.kReverse);
 		solenoidLeft.set(Value.kForward);
 		solenoidRight.set(Value.kForward);
 		solenoidHood.set(Value.kForward);
@@ -40,8 +40,8 @@ class Intake {
 	}
 
 	public void periodic() {
-		//togglePistons();
-		toggleIntake();
+		togglePistons();
+		//toggleIntake();
 	}
 
 	private void togglePistons() {
