@@ -103,7 +103,8 @@ public class Turret {
 			}
 		}
 
-		System.out.println("Falcon Speed: " + -falconOutputSpeed);
+		//System.out.println("Falcon Speed: " + -falconOutputSpeed);
+		
 		SmartDashboard.putNumber("Falcon Output Speed", falconOutputSpeed);
 		falconTalon.set(ControlMode.PercentOutput, -falconOutputSpeed);
 

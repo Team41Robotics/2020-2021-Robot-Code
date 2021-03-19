@@ -11,11 +11,16 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Joystick;
-
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DigitalInput;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANEncoder;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.cscore.VideoMode.PixelFormat;
+import edu.wpi.first.cameraserver.CameraServer;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -31,6 +36,7 @@ public class Robot extends TimedRobot {
 	public static Joystick leftJoy = new Joystick(3);
 	public static Joystick rightJoy = new Joystick(4);
 	
+	public static PurePursuit purePursuit;
 	public static Limelight lime;
 	public static Turret turret;
 	// public static Hood hood;
@@ -39,17 +45,14 @@ public class Robot extends TimedRobot {
 	public static Indexer indexer;
 	private Compressor comp;
 
-	//Testing Purposes
-	/*
-	private CANSparkMax rotateSpark;
-	private double rotateSpeed;
-	private DigitalInput rotateLimitLeft, rotateLimitCenter, rotateLimitRight;
-	private CANEncoder rotateEncoder;
-	*/
+	public double startTime;
+
+	private NetworkTable realsense;
 
 	
 	@Override
 	public void robotInit() {
+		purePursuit = new PurePursuit(Constants.Paths.slalom);
 		lime = new Limelight();
 		turret = new Turret();
 		// hood = new Hood();
@@ -76,8 +79,10 @@ public class Robot extends TimedRobot {
 		comp.start();
 		
 		// Start driver camera
-		// UsbCamera cam = CameraServer.getInstance().startAutomaticCapture();
-		// cam.setVideoMode(PixelFormat.kMJPEG, 80, 60, 60);
+		UsbCamera cam = CameraServer.getInstance().startAutomaticCapture();
+		cam.setVideoMode(PixelFormat.kMJPEG, 80, 60, 60);
+
+		realsense = NetworkTableInstance.getDefault().getTable("ArUco_Localization");
 	}
 
 	@Override
@@ -87,12 +92,35 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void autonomousInit() {
-
+		startTime = System.currentTimeMillis();   
 	}
 
 	@Override
 	public void autonomousPeriodic() {
-		drive.trackWheelVelocities(0.5, 0.5);
+		//PURE PURSUIT
+		double xR = realsense.getEntry("x").getDouble(0);
+		double yR = realsense.getEntry("y").getDouble(0);
+		double thetaR = realsense.getEntry("theta").getDouble(0);
+		//thetaR = thetaR/180*Math.PI;
+		
+		//System.out.println(xR+ " " + yR + " " + thetaR);
+		
+		purePursuit.calculateClosestPoint(xR, yR);
+		purePursuit.calculateLookAhead(xR, yR, thetaR);
+		double curvature = purePursuit.calcCurvatureToLookAhead(xR, yR, thetaR);
+		//System.out.println(curvature);
+
+		double maxV = purePursuit.getMaxVelocityAtClosestPoint();
+		System.out.println("maxV: " + maxV);
+		System.out.println("omega:" + curvature*maxV);
+		
+		double LVel = maxV * (2 + curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
+		double RVel = maxV * (2 - curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
+
+		//System.out.println(LVel + " " + RVel);
+
+		drive.trackWheelVelocities(LVel, RVel);
+		
 	}
 
 	@Override
@@ -102,12 +130,12 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void teleopPeriodic() {
-		lime.periodic();
-		turret.periodic();
+		//lime.periodic();
+		//turret.periodic();
 		// if(useHood) hood.periodic();
 		drive.periodic();
-		intake.periodic();
-		indexer.periodic();
+		//intake.periodic();
+		//indexer.periodic();
 
 		/*
 		System.out.println("Left Toggle: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_L));

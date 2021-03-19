@@ -16,21 +16,23 @@ public class Driving {
 	private CANSparkMax sparkLF, sparkLB, sparkRF, sparkRB;
 	private CANEncoder leftEnc, rightEnc;
 
-	private double speedMultiplier = 0.7; // Starts robot at 50% speed for manual control
+	private double speedMultiplier = 1.0; // Starts robot at 50% speed for manual control
 	private double leftSpeed = 0;
 	private double rightSpeed = 0;
-	private PIDController leftPid, rightPid;
+	private PIDController leftPid, rightPid, leftPPPid, rightPPPid;
 	private boolean feedForward = true;
-	private boolean usePid = false;
+	private boolean usePid = true;
+	private boolean useCurve = true;
 
 	private final double MAX_DRIVE_SPEED = 5_500;
-	private final double L_Kp = 0.02, L_Ki = 0, L_Kd = 0.00615;
-	private final double R_Kp = 0.02, R_Ki = 0, R_Kd = 0.00615;
+	private final double L_Kp = 0.03, L_Ki = 0, L_Kd = 0.004; // 0.3 0 0.003
+	private final double R_Kp = 0.03, R_Ki = 0, R_Kd = 0.004; // 0.3 0 0.003
+
+	private final double PPL_Kp = 0.02, PPL_Ki = 0, PPL_Kd = 0.004; // 0.3 0 0.003
+	private final double PPR_Kp = 0.02, PPR_Ki = 0, PPR_Kd = 0.004;
+
 
 	// PURE PURSUIT STUFF
-	private final double PP_L_Kp = .011, PP_L_Ki = 0, PP_L_Kd = 0;
-	private final double PP_R_Kp = .011, PP_R_Ki = 0, PP_R_Kd = 0;
-	private PIDController PP_leftPid, PP_rightPid;
 
 	public Driving() {
 		leftJoy = Robot.leftJoy;
@@ -45,19 +47,15 @@ public class Driving {
 
 		leftEnc.setPosition(0);
 		rightEnc.setPosition(0);
-		//leftEnc.setPositionConversionFactor(1.0/12.0);
-		//rightEnc.setPositionConversionFactor(1.0/12.0);
-		
-		//leftEnc.setVelocityConversionFactor(1.0/12.0/60.0);
-		//rightEnc.setVelocityConversionFactor(1.0/12.0/60.0);
+
 		leftEnc.setVelocityConversionFactor(DriveConstants.kEncoderDistancePerPulse);
 		rightEnc.setVelocityConversionFactor(DriveConstants.kEncoderDistancePerPulse);
 
+		leftPPPid = new PIDController(PPL_Kp, PPL_Ki, PPL_Kd);
+		rightPPPid = new PIDController(PPR_Kp, PPR_Ki, PPR_Kd);
+
 		leftPid = new PIDController(L_Kp, L_Ki, L_Kd);
 		rightPid = new PIDController(R_Kp, R_Ki, R_Kd);
-
-		PP_leftPid = new PIDController(PP_L_Kp, PP_L_Ki, PP_L_Kd);
-		PP_rightPid = new PIDController(PP_R_Kp, PP_R_Ki, PP_R_Kd);
 	}
 
 	public void trackWheelVelocities(double LVel, double RVel) {
@@ -65,32 +63,16 @@ public class Driving {
 		double leftVelocity = leftEnc.getVelocity();
 		double rightVelocity = rightEnc.getVelocity();
 
-		leftSpeed += leftPid.calculate(-leftVelocity, LVel);
-		rightSpeed += rightPid.calculate(rightVelocity, RVel);
+		leftSpeed += leftPPPid.calculate(-leftVelocity, LVel);
+		rightSpeed += rightPPPid.calculate(rightVelocity, RVel);
 
-		if(leftSpeed > 1) leftSpeed = 1;
-		if(rightSpeed > 1) rightSpeed = 1;
-
-		if(leftSpeed < -1) leftSpeed = -1;
-		if(rightSpeed < -1) rightSpeed = -1;
-
-		sparkRF.set(rightSpeed);
-		sparkRB.set(rightSpeed);
-		sparkLF.set(-leftSpeed);
-		sparkLB.set(-leftSpeed);
+		drive();
 		
-
-		//System.out.println("Left Encoder Velocity: " + leftEnc.getVelocity());
-		//System.out.println("Right Encoder Velocity: " + rightEnc.getVelocity());
-
-	
-		SmartDashboard.putNumber("left speed", -leftSpeed);
-		SmartDashboard.putNumber("right speed", rightSpeed);
+		SmartDashboard.putNumber("left speed", leftSpeed);
+		SmartDashboard.putNumber("right speed", rightSpeed);		
 		SmartDashboard.putNumber("left drivetrain encoder velocity", -leftEnc.getVelocity());
 		SmartDashboard.putNumber("right drivetrain encoder velocity", rightEnc.getVelocity());
 	}
-
-
 
 	public void periodic() {
 		double leftAxis = leftJoy.getRawAxis(BUTTONS.DRIVER_STATION.L_JOY_Y_AXIS);
@@ -105,7 +87,7 @@ public class Driving {
 
 		
 		// This slows down driving (useful for intaking balls since that requires slow speeds)
-		if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_RIGHT) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_LEFT)) {
+		/*if(leftJoy.getRawButton(BUTTONS.DRIVER_STATION.L_JOY_BUTTON_RIGHT) && rightJoy.getRawButton(BUTTONS.DRIVER_STATION.R_JOY_BUTTON_LEFT)) {
 			leftAxis *= 0.45;
 			rightAxis *= 0.45;
 		}
@@ -114,6 +96,7 @@ public class Driving {
 			leftAxis *= 1.0;
 			rightAxis *= 1.0;
 		}
+
 		else {
 			// Use speed multiplier to slow down driving. Default is 1.0
 			final double speedMultiplierIncrement = 1.0;
@@ -127,15 +110,25 @@ public class Driving {
 			}
 			leftAxis *= speedMultiplier;
 			rightAxis *= speedMultiplier;
+		}*/
+
+		if(useCurve){
+			double a = 0.8;
+			double b = 0.0;
+			leftAxis = b + (1-b)*(a*Math.pow(leftAxis, 3) + (1-a)*leftAxis);
+			rightAxis = b + (1-b)*(a*Math.pow(rightAxis, 3) + (1-a)*rightAxis);
 		}
+
+		System.out.println("Left Axis: " + leftAxis);
+		System.out.println("Right Axis: " + rightAxis);
+		
 		
 		if(usePid) {
-			leftSpeed = leftPid.calculate(leftEnc.getVelocity()/MAX_DRIVE_SPEED, leftAxis); // Goal, current
-			rightSpeed = rightPid.calculate(-rightEnc.getVelocity()/MAX_DRIVE_SPEED, rightAxis); // Goal, current
-			if(feedForward) {
-				leftSpeed += leftAxis;
-				rightSpeed += rightAxis;
-			}
+			double leftVelocity = leftEnc.getVelocity();
+			double rightVelocity = rightEnc.getVelocity();
+
+			leftSpeed += leftPid.calculate(-leftVelocity, -leftAxis*2);
+			rightSpeed += rightPid.calculate(rightVelocity, -rightAxis*2);
 		}
 		
 		else {
@@ -151,20 +144,19 @@ public class Driving {
 		
 		drive();
 
-		SmartDashboard.putNumber("left speed", leftSpeed);
-		SmartDashboard.putNumber("right speed", rightSpeed);
 		SmartDashboard.putNumber("left axis", leftAxis);
 		SmartDashboard.putNumber("right axis", rightAxis);
-		SmartDashboard.putNumber("left drivetrain encoder velocity", leftEnc.getVelocity());
+
+		SmartDashboard.putNumber("left speed", leftSpeed);
+		SmartDashboard.putNumber("right speed", rightSpeed);		
+		SmartDashboard.putNumber("left drivetrain encoder velocity", -leftEnc.getVelocity());
 		SmartDashboard.putNumber("right drivetrain encoder velocity", rightEnc.getVelocity());
 	}
 
 	private void drive() {
-		double pow = 3.0;
-
-		sparkRF.set(-Math.pow(rightSpeed, pow));
-		sparkRB.set(-Math.pow(rightSpeed, pow));
-		sparkLF.set(Math.pow(leftSpeed, pow));
-		sparkLB.set(Math.pow(leftSpeed, pow));
+		sparkRF.set(rightSpeed);
+		sparkRB.set(rightSpeed);
+		sparkLF.set(-leftSpeed);
+		sparkLB.set(-leftSpeed);
 	}
 }
