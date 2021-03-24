@@ -63,8 +63,8 @@ public class Driving {
 		double leftVelocity = leftEnc.getVelocity();
 		double rightVelocity = rightEnc.getVelocity();
 
-		leftSpeed += leftPPPid.calculate(-leftVelocity, LVel);
-		rightSpeed += rightPPPid.calculate(rightVelocity, RVel);
+		leftSpeed += leftPid.calculate(-leftVelocity, LVel);
+		rightSpeed += rightPid.calculate(rightVelocity, RVel);
 
 		drive();
 		
@@ -113,22 +113,22 @@ public class Driving {
 		}*/
 
 		if(useCurve){
-			double a = 0.8;
+			double a = 0.3;
 			double b = 0.0;
 			leftAxis = b + (1-b)*(a*Math.pow(leftAxis, 3) + (1-a)*leftAxis);
 			rightAxis = b + (1-b)*(a*Math.pow(rightAxis, 3) + (1-a)*rightAxis);
 		}
 
-		System.out.println("Left Axis: " + leftAxis);
-		System.out.println("Right Axis: " + rightAxis);
+		//System.out.println("Left Axis: " + leftAxis);
+		//System.out.println("Right Axis: " + rightAxis);
 		
 		
 		if(usePid) {
 			double leftVelocity = leftEnc.getVelocity();
 			double rightVelocity = rightEnc.getVelocity();
 
-			leftSpeed += leftPid.calculate(-leftVelocity, -leftAxis*2);
-			rightSpeed += rightPid.calculate(rightVelocity, -rightAxis*2);
+			leftSpeed += leftPPPid.calculate(-leftVelocity, -leftAxis*3.2);
+			rightSpeed += rightPPPid.calculate(rightVelocity, -rightAxis*3.2);
 		}
 		
 		else {

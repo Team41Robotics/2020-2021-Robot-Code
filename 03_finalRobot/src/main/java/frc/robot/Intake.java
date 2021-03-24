@@ -41,7 +41,7 @@ class Intake {
 
 	public void periodic() {
 		togglePistons();
-		//toggleIntake();
+		toggleIntake();
 	}
 
 	private void togglePistons() {

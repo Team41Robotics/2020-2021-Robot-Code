@@ -4,7 +4,13 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-
+/* 
+||||
+|  |
+||||
+|
+|
+*/
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
@@ -49,10 +55,11 @@ public class Robot extends TimedRobot {
 
 	private NetworkTable realsense;
 
+	public int pathNumber = 1;
 	
 	@Override
 	public void robotInit() {
-		purePursuit = new PurePursuit(Constants.Paths.slalom);
+		purePursuit = new PurePursuit(Constants.Paths.bouncePath1);
 		lime = new Limelight();
 		turret = new Turret();
 		// hood = new Hood();
@@ -97,29 +104,64 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void autonomousPeriodic() {
+
+
 		//PURE PURSUIT
+		// slalom : 1.3x .65 look ahead
 		double xR = realsense.getEntry("x").getDouble(0);
 		double yR = realsense.getEntry("y").getDouble(0);
 		double thetaR = realsense.getEntry("theta").getDouble(0);
-		//thetaR = thetaR/180*Math.PI;
 		
-		//System.out.println(xR+ " " + yR + " " + thetaR);
+		if(pathNumber == 2 || pathNumber == 4) {
+			if(thetaR < 0)
+				thetaR = (2*Math.PI + thetaR);
+			thetaR += Math.PI;
+		}
+		System.out.println(pathNumber);
+		System.out.println(xR+ " " + yR + " " + thetaR);
 		
 		purePursuit.calculateClosestPoint(xR, yR);
+		
 		purePursuit.calculateLookAhead(xR, yR, thetaR);
 		double curvature = purePursuit.calcCurvatureToLookAhead(xR, yR, thetaR);
-		//System.out.println(curvature);
+		System.out.println(curvature);
 
 		double maxV = purePursuit.getMaxVelocityAtClosestPoint();
-		System.out.println("maxV: " + maxV);
-		System.out.println("omega:" + curvature*maxV);
-		
+		//System.out.println("maxV: " + maxV);
+		//System.out.println("omega:" + curvature*maxV);
+		maxV *= 2;
+		if(pathNumber == 2 || pathNumber == 4)
+			curvature = -curvature;
 		double LVel = maxV * (2 + curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
 		double RVel = maxV * (2 - curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
+
+		if(pathNumber == 2 || pathNumber == 4) {
+			LVel = -LVel;
+			RVel = -RVel;
+		}
 
 		//System.out.println(LVel + " " + RVel);
 
 		drive.trackWheelVelocities(LVel, RVel);
+
+		if(purePursuit.isFinished()) {
+			if(pathNumber == 1) {
+				purePursuit = new PurePursuit(Constants.Paths.bouncePath2);
+				pathNumber++;
+			}
+			else if(pathNumber == 2) {
+				purePursuit = new PurePursuit(Constants.Paths.bouncePath3);
+				pathNumber++;
+			}
+			else if(pathNumber == 3) {
+				purePursuit = new PurePursuit(Constants.Paths.bouncePath4);
+				pathNumber++;
+			}
+			else {
+
+			}
+
+		}
 		
 	}
 
@@ -130,12 +172,12 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void teleopPeriodic() {
-		//lime.periodic();
-		//turret.periodic();
+		lime.periodic();
+		turret.periodic();
 		// if(useHood) hood.periodic();
 		drive.periodic();
-		//intake.periodic();
-		//indexer.periodic();
+		intake.periodic();
+		indexer.periodic();
 
 		/*
 		System.out.println("Left Toggle: " + driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_L));

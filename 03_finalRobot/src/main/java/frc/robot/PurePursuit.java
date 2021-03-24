@@ -1,8 +1,10 @@
 package frc.robot;
 
+import java.nio.file.Paths;
+
 public class PurePursuit {
 
-    private final double LOOK_AHEAD_DISTANCE = 1.5;
+    private final double LOOK_AHEAD_DISTANCE = 0.9; //.7
     private double[][] path;
     private int closestPointIdx = 0;
     
@@ -29,7 +31,7 @@ public class PurePursuit {
             pX = path[i][0];
             pY = path[i][1];
             d = distanceCalc(pX,pY,rX,rY);
-            if(d < minD){
+            if(d < minD && i - closestPointIdx < 10){
                 minD = d;
                 idx = i;
             }
@@ -37,7 +39,13 @@ public class PurePursuit {
         
         closestPointIdx = idx;
         //System.out.println("Closest point: " + path[closestPointIdx][0] + " " + path[closestPointIdx][1]);
+        //System.out.println(closestPointIdx);
         return idx;
+    }
+
+    public boolean isFinished() {
+
+        return (getMaxVelocityAtClosestPoint() == 0 && closestPointIdx > 1);
     }
 
     double dotProduct(double x1, double y1, double x2, double y2) {
@@ -47,10 +55,11 @@ public class PurePursuit {
     public void calculateLookAhead(double rX, double rY, double rTheta) {
 
         for(int i = (int)Math.floor(lastLookAheadIdx); i < path.length -1; i++) {
+            if(i - lastLookAheadIdx > 10) break;
             // vector for line segment between points
             double segmentX = path[i+1][0] - path[i][0];
             double segmentY = path[i+1][1] - path[i][1];
-
+            //double LOOK_AHEAD_DISTANCE = path[closestPointIdx][4];
             //vector from center of robot to starting point of segment
             double fX = path[i][0] - rX;  
             double fY = path[i][1] - rY;
@@ -65,7 +74,7 @@ public class PurePursuit {
                 continue;
             }
 
-            double t = (-b - discriminant) / (2*a);
+            double t = (-b + Math.sqrt(discriminant)) / (2*a);
             if(t >= 0 && t <= 1 && t+i > lastLookAheadIdx) {
 
                 lastLookAheadIdx = t + i;
@@ -74,7 +83,7 @@ public class PurePursuit {
                 return;
             }
 
-            t = (-b + discriminant) / (2*a);
+            t = (-b - Math.sqrt(discriminant)) / (2*a);
             if(t >= 0 && t <= 1 && t+i > lastLookAheadIdx) {
 
                 lastLookAheadIdx = t + i;
@@ -95,10 +104,10 @@ public class PurePursuit {
         double b = 1;
         double c = Math.tan(rTheta)*rX - rY;
         double x = Math.abs(a*lookAheadX + b*lookAheadY +c) / Math.sqrt(a*a + b*b);
-       
+        //double LOOK_AHEAD_DISTANCE = path[closestPointIdx][4];
         double curvature = (2*x)/(LOOK_AHEAD_DISTANCE*LOOK_AHEAD_DISTANCE);
 
-        System.out.println("Look ahead: " + lookAheadX + " " + lookAheadY);
+        //System.out.println("Look ahead: " +lastLookAheadIdx + lookAheadX + " " + lookAheadY);
 
         // Calculate cross product between robot direction vector and vector from robot to lookahead point.
         // Negative means counterclockwise
