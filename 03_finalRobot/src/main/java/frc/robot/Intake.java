@@ -29,11 +29,11 @@ class Intake {
 
 	private void intakeInit() {
 		System.out.println("Solenoid Reverse");
-		solenoidLeft.set(Value.kReverse);
-		solenoidRight.set(Value.kReverse);
+		//solenoidLeft.set(Value.kReverse);
+		//solenoidRight.set(Value.kReverse);
 		solenoidHood.set(Value.kReverse);
-		//solenoidLeft.set(Value.kForward);
-		//solenoidRight.set(Value.kForward);
+		solenoidLeft.set(Value.kForward);
+		solenoidRight.set(Value.kForward);
 		//solenoidHood.set(Value.kForward);
 		leftTrigger = false;
 		rightTrigger = false;
@@ -49,15 +49,15 @@ class Intake {
 			if(!leftTrigger){ 
 				System.out.println("forward");
 				leftTrigger = true;
-				solenoidLeft.set(Value.kForward);
-				solenoidRight.set(Value.kForward);
+				//solenoidLeft.set(Value.kForward);
+				//solenoidRight.set(Value.kForward);
 				solenoidHood.set(Value.kForward);
 			}
 			else {
 				leftTrigger = false;
 				System.out.println("reverse");
-				solenoidLeft.set(Value.kReverse);
-				solenoidRight.set(Value.kReverse);
+				//solenoidLeft.set(Value.kReverse);
+				//solenoidRight.set(Value.kReverse);
 				solenoidHood.set(Value.kReverse);
 			}
 		}

@@ -77,7 +77,7 @@ class Indexer {
 
         if(driverstation.getRawButton(BUTTONS.DRIVER_STATION.TOGGLE_SWITCH_M)){
             vertSpeed = 1.0;
-            spindexSpeed = -0.30;
+            spindexSpeed = -0.20;
         }
         else {
             vertSpeed = 0.0;
