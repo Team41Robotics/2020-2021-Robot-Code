@@ -49,11 +49,14 @@ public class Robot extends TimedRobot {
 	public static Intake intake;
 	public static Driving drive;
 	public static Indexer indexer;
+	public static BallTracking ballTracking;
 	private Compressor comp;
 
 	public double startTime;
 
 	private NetworkTable realsense;
+
+	private boolean purePursuit = false;
 
 	public int pathNumber = 1;
 	
@@ -66,6 +69,7 @@ public class Robot extends TimedRobot {
 		intake = new Intake();
 		indexer = new Indexer();
 		drive = new Driving();
+		baller = new BallTracking();
 		
 		/*
 		rotateSpark = new CANSparkMax(PORTS.ROTATE_SPARK, MotorType.kBrushless);
@@ -104,65 +108,75 @@ public class Robot extends TimedRobot {
 
 	@Override
 	public void autonomousPeriodic() {
+		double LVel = 0;
+		double RVel = 0;
 
+		if(purePursuit){
+			//PURE PURSUIT
+			// slalom : 1.3x .65 look ahead
+			double xR = realsense.getEntry("x").getDouble(0);
+			double yR = realsense.getEntry("y").getDouble(0);
+			double thetaR = realsense.getEntry("theta").getDouble(0);
+			
+			if(pathNumber == 2 || pathNumber == 4) {
+				if(thetaR < 0)
+					thetaR = (2*Math.PI + thetaR);
+				thetaR += Math.PI;
+			}
+			System.out.println(pathNumber);
+			System.out.println(xR+ " " + yR + " " + thetaR);
+			
+			purePursuit.calculateClosestPoint(xR, yR);
+			
+			purePursuit.calculateLookAhead(xR, yR, thetaR);
+			double curvature = purePursuit.calcCurvatureToLookAhead(xR, yR, thetaR);
+			System.out.println(curvature);
 
-		//PURE PURSUIT
-		// slalom : 1.3x .65 look ahead
-		double xR = realsense.getEntry("x").getDouble(0);
-		double yR = realsense.getEntry("y").getDouble(0);
-		double thetaR = realsense.getEntry("theta").getDouble(0);
-		
-		if(pathNumber == 2 || pathNumber == 4) {
-			if(thetaR < 0)
-				thetaR = (2*Math.PI + thetaR);
-			thetaR += Math.PI;
+			double maxV = purePursuit.getMaxVelocityAtClosestPoint();
+			//System.out.println("maxV: " + maxV);
+			//System.out.println("omega:" + curvature*maxV);
+			maxV *= 2;
+			if(pathNumber == 2 || pathNumber == 4)
+				curvature = -curvature;
+			LVel = maxV * (2 + curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
+			RVel = maxV * (2 - curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
+
+			if(pathNumber == 2 || pathNumber == 4) {
+				LVel = -LVel;
+				RVel = -RVel;
+			}
+
+			//System.out.println(LVel + " " + RVel);
+
+			drive.trackWheelVelocities(LVel, RVel);
+
+			if(purePursuit.isFinished()) {
+				if(pathNumber == 1) {
+					purePursuit = new PurePursuit(Constants.Paths.bouncePath2);
+					pathNumber++;
+				}
+				else if(pathNumber == 2) {
+					purePursuit = new PurePursuit(Constants.Paths.bouncePath3);
+					pathNumber++;
+				}
+				else if(pathNumber == 3) {
+					purePursuit = new PurePursuit(Constants.Paths.bouncePath4);
+					pathNumber++;
+				}
+				else {
+
+				}
+
+			}
 		}
-		System.out.println(pathNumber);
-		System.out.println(xR+ " " + yR + " " + thetaR);
-		
-		purePursuit.calculateClosestPoint(xR, yR);
-		
-		purePursuit.calculateLookAhead(xR, yR, thetaR);
-		double curvature = purePursuit.calcCurvatureToLookAhead(xR, yR, thetaR);
-		System.out.println(curvature);
 
-		double maxV = purePursuit.getMaxVelocityAtClosestPoint();
-		//System.out.println("maxV: " + maxV);
-		//System.out.println("omega:" + curvature*maxV);
-		maxV *= 2;
-		if(pathNumber == 2 || pathNumber == 4)
-			curvature = -curvature;
-		double LVel = maxV * (2 + curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
-		double RVel = maxV * (2 - curvature*Constants.DriveConstants.kTrackwidthMeters) /2;
-
-		if(pathNumber == 2 || pathNumber == 4) {
-			LVel = -LVel;
-			RVel = -RVel;
+		else{
+			if (balller.getBallFound()){
+				LVel = baller.getAngularVelocity(true);
+				RVel = baller.getAngularVelocity(false);
+				drive.trackWheelVelocities(LVel, RVel);
+			}
 		}
-
-		//System.out.println(LVel + " " + RVel);
-
-		drive.trackWheelVelocities(LVel, RVel);
-
-		if(purePursuit.isFinished()) {
-			if(pathNumber == 1) {
-				purePursuit = new PurePursuit(Constants.Paths.bouncePath2);
-				pathNumber++;
-			}
-			else if(pathNumber == 2) {
-				purePursuit = new PurePursuit(Constants.Paths.bouncePath3);
-				pathNumber++;
-			}
-			else if(pathNumber == 3) {
-				purePursuit = new PurePursuit(Constants.Paths.bouncePath4);
-				pathNumber++;
-			}
-			else {
-
-			}
-
-		}
-		
 	}
 
 	@Override
